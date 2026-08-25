@@ -1,0 +1,57 @@
+import { useState } from 'react'
+import { useAuth } from '../hooks/useAuth'
+import { channelName } from '../lib/supabase'
+import AdminOverviewTab from './AdminOverviewTab'
+import AdminQuestionsTab from './AdminQuestionsTab'
+import AdminResponsesTab from './AdminResponsesTab'
+
+type Tab = 'overview' | 'questions' | 'responses'
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'questions', label: 'Questions' },
+  { id: 'responses', label: 'Responses' },
+]
+
+export default function AdminPanel() {
+  const { signOut } = useAuth()
+  const [tab, setTab] = useState<Tab>('overview')
+
+  return (
+    <div className="min-h-screen bg-wa-bg pb-10">
+      <header className="sticky top-0 z-10 bg-wa-header text-white shadow">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
+          <div>
+            <h1 className="text-[15px] font-semibold leading-tight">{channelName} Admin</h1>
+            <p className="text-[12px] text-white/70">Response collector</p>
+          </div>
+          <button
+            onClick={() => signOut()}
+            className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium"
+          >
+            Sign out
+          </button>
+        </div>
+        <div className="mx-auto flex max-w-4xl gap-1 px-2">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`px-3 py-2 text-sm font-medium border-b-2 transition ${
+                tab === t.id ? 'border-white text-white' : 'border-transparent text-white/60'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-4xl px-4 py-5">
+        {tab === 'overview' && <AdminOverviewTab />}
+        {tab === 'questions' && <AdminQuestionsTab />}
+        {tab === 'responses' && <AdminResponsesTab />}
+      </main>
+    </div>
+  )
+}

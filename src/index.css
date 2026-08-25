@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-wa-bg text-wa-ink font-sans;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* WhatsApp-style faint chat wallpaper texture */
+.chat-wallpaper {
+  background-color: #ece5dd;
+  background-image: radial-gradient(#d9d2c7 0.5px, transparent 0.5px),
+    radial-gradient(#d9d2c7 0.5px, #ece5dd 0.5px);
+  background-size: 22px 22px;
+  background-position: 0 0, 11px 11px;
+}
+
+.urdu-text {
+  font-family: 'Noto Nastaliq Urdu', serif;
+  line-height: 2.1;
+  font-size: 1.05rem;
+}
+
+.bubble-tail-in::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -7px;
+  width: 12px;
+  height: 14px;
+  background: inherit;
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+
+.bubble-tail-out::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -7px;
+  width: 12px;
+  height: 14px;
+  background: inherit;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
