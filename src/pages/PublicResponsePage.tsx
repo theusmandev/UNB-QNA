@@ -19,6 +19,15 @@ export default function PublicResponsePage() {
   const [pendingMessage, setPendingMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const isNearBottomRef = useRef(true)
+  const forceScrollRef = useRef(false)
+
+  function handleScroll() {
+    if (!scrollContainerRef.current) return
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current
+    isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 150
+  }
 
   const load = useCallback(async () => {
     const { data: q, error: qErr } = await supabase
@@ -49,9 +58,12 @@ export default function PublicResponsePage() {
   }, [load])
 
   useEffect(() => {
-    setTimeout(() => {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-    }, 100)
+    if (forceScrollRef.current || isNearBottomRef.current) {
+      setTimeout(() => {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      }, 100)
+      forceScrollRef.current = false
+    }
   }, [feed.length, pending.length])
 
   async function submitResponse(message: string, id: VisitorIdentity) {
@@ -72,6 +84,7 @@ export default function PublicResponsePage() {
       return
     }
 
+    forceScrollRef.current = true
     addPending(message)
     setCount((c) => (c === null ? null : c + 1))
   }
@@ -115,7 +128,7 @@ export default function PublicResponsePage() {
         subtitle={count !== null ? `${count} response${count === 1 ? '' : 's'}` : 'Channel'}
       />
 
-      <div className="chat-wallpaper flex-1 overflow-y-auto py-3">
+      <div ref={scrollContainerRef} onScroll={handleScroll} className="chat-wallpaper flex-1 overflow-y-auto py-3">
         {/* Original question, styled like a channel announcement */}
         <div className="mx-auto max-w-xl px-3">
           <div className="rounded-lg bg-[#FCF3D7] px-3 py-2.5 shadow-bubble">
