@@ -49,7 +49,9 @@ export default function PublicResponsePage() {
   }, [load])
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: 'end' })
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    }, 100)
   }, [feed.length, pending.length])
 
   async function submitResponse(message: string, id: VisitorIdentity) {
@@ -108,7 +110,7 @@ export default function PublicResponsePage() {
   }
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex flex-col" style={{ height: '100dvh' }}>
       <Header
         subtitle={count !== null ? `${count} response${count === 1 ? '' : 's'}` : 'Channel'}
       />
