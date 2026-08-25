@@ -22,11 +22,18 @@ export default function PublicResponsePage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const isNearBottomRef = useRef(true)
   const forceScrollRef = useRef(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const prevFeedLength = useRef(0)
+  const prevPendingLength = useRef(0)
 
   function handleScroll() {
     if (!scrollContainerRef.current) return
     const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current
-    isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 150
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 150
+    isNearBottomRef.current = isNearBottom
+    if (isNearBottom) {
+      setUnreadCount(c => c > 0 ? 0 : c)
+    }
   }
 
   const load = useCallback(async () => {
@@ -58,11 +65,22 @@ export default function PublicResponsePage() {
   }, [load])
 
   useEffect(() => {
+    const newItems =
+      (feed.length - prevFeedLength.current) +
+      (pending.length - prevPendingLength.current)
+    const isFirstLoad = prevFeedLength.current === 0 && prevPendingLength.current === 0
+
+    prevFeedLength.current = feed.length
+    prevPendingLength.current = pending.length
+
     if (forceScrollRef.current || isNearBottomRef.current) {
       setTimeout(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
       }, 100)
       forceScrollRef.current = false
+      setUnreadCount(0)
+    } else if (newItems > 0 && !isFirstLoad) {
+      setUnreadCount((c) => c + newItems)
     }
   }, [feed.length, pending.length])
 
@@ -128,7 +146,8 @@ export default function PublicResponsePage() {
         subtitle={count !== null ? `${count} response${count === 1 ? '' : 's'}` : 'Channel'}
       />
 
-      <div ref={scrollContainerRef} onScroll={handleScroll} className="chat-wallpaper flex-1 overflow-y-auto py-3">
+      <div className="relative flex-1 flex flex-col min-h-0">
+        <div ref={scrollContainerRef} onScroll={handleScroll} className="chat-wallpaper flex-1 overflow-y-auto py-3">
         {/* Original question, styled like a channel announcement */}
         <div className="mx-auto max-w-xl px-3">
           <div className="rounded-lg bg-[#FCF3D7] px-3 py-2.5 shadow-bubble">
@@ -172,6 +191,24 @@ export default function PublicResponsePage() {
           <div ref={bottomRef} />
         </div>
       </div>
+
+      {unreadCount > 0 && (
+        <button
+          onClick={() => {
+            bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+            setUnreadCount(0)
+          }}
+          className="absolute bottom-[80px] right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white text-wa-teal shadow-md border border-gray-100 hover:bg-gray-50 focus:outline-none"
+        >
+          <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+          <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-wa-teal text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+            {unreadCount}
+          </span>
+        </button>
+      )}
+    </div>
 
       {error && <p className="bg-red-50 px-4 py-1.5 text-center text-xs text-red-600">{error}</p>}
 
