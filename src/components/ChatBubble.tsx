@@ -1,4 +1,5 @@
 import { isArabicScript } from '../lib/slug'
+import { linkify } from '../lib/linkify'
 
 type Variant = 'reader' | 'reader-pending' | 'channel'
 
@@ -45,7 +46,7 @@ export default function ChatBubble({ text, variant, label, timestamp, showTick }
             rtl ? 'urdu-text text-right' : 'text-left',
           ].join(' ')}
         >
-          {text}
+          {variant === 'channel' ? linkify(text) : text}
         </p>
         <div className={`mt-1 flex items-center gap-1 ${rtl ? 'justify-start' : 'justify-end'}`}>
           {variant === 'reader-pending' && (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { linkify } from '../lib/linkify'
 import type { Question, ResponseRow } from '../types'
 
 export default function AdminResponsesTab({
@@ -101,7 +102,7 @@ export default function AdminResponsesTab({
             {r.reply_text ? (
               <div className="mt-3 rounded-lg bg-wa-outgoing p-3">
                 <p className="text-xs font-semibold text-wa-teal">Published reply</p>
-                <p className="mt-0.5 whitespace-pre-wrap text-sm text-wa-ink">{r.reply_text}</p>
+                <p className="mt-0.5 whitespace-pre-wrap text-sm text-wa-ink">{linkify(r.reply_text)}</p>
               </div>
             ) : (
               <div className="mt-3">
