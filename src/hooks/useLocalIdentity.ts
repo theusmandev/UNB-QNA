@@ -9,6 +9,7 @@ const pendingKey = (slug: string) => `unb_pending_${slug}`
  *  database for this data, only localStorage. */
 export function useLocalIdentity(slug: string) {
   const [identity, setIdentityState] = useState<VisitorIdentity | null>(null)
+  const [visitorId, setVisitorId] = useState<string>('')
   const [pending, setPending] = useState<LocalPendingResponse[]>([])
 
   useEffect(() => {
@@ -17,6 +18,17 @@ export function useLocalIdentity(slug: string) {
       setIdentityState(raw ? JSON.parse(raw) : null)
     } catch {
       setIdentityState(null)
+    }
+
+    try {
+      let vid = localStorage.getItem('unb_visitor_id')
+      if (!vid) {
+        vid = crypto.randomUUID()
+        localStorage.setItem('unb_visitor_id', vid)
+      }
+      setVisitorId(vid)
+    } catch {
+      setVisitorId(crypto.randomUUID())
     }
   }, [])
 
@@ -44,5 +56,5 @@ export function useLocalIdentity(slug: string) {
     [pending, slug]
   )
 
-  return { identity, saveIdentity, pending, addPending }
+  return { identity, saveIdentity, pending, addPending, visitorId }
 }

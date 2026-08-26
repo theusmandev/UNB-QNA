@@ -257,3 +257,113 @@ begin;
   create publication supabase_realtime;
 commit;
 alter publication supabase_realtime add table public.questions, public.responses;
+
+-- ============================================================================
+-- PHASE 1: UPDATES
+-- ============================================================================
+
+create table if not exists public.updates (
+  id            uuid primary key default gen_random_uuid(),
+  title         text not null,
+  content       text not null,
+  created_at    timestamptz not null default now()
+);
+
+create table if not exists public.update_reactions (
+  id          uuid primary key default gen_random_uuid(),
+  update_id   uuid not null references public.updates(id) on delete cascade,
+  visitor_id  uuid not null,
+  reaction    text not null,
+  created_at  timestamptz not null default now(),
+  unique (update_id, visitor_id, reaction)
+);
+
+create index if not exists updates_created_at_idx on public.updates(created_at desc);
+create index if not exists update_reactions_update_id_idx on public.update_reactions(update_id);
+
+-- RLS
+alter table public.updates enable row level security;
+alter table public.update_reactions enable row level security;
+
+-- updates table policies
+drop policy if exists "public can view updates" on public.updates;
+create policy "public can view updates" on public.updates for select to anon, authenticated using (true);
+
+drop policy if exists "admin can insert updates" on public.updates;
+create policy "admin can insert updates" on public.updates for insert to authenticated with check (true);
+
+drop policy if exists "admin can update updates" on public.updates;
+create policy "admin can update updates" on public.updates for update to authenticated using (true) with check (true);
+
+drop policy if exists "admin can delete updates" on public.updates;
+create policy "admin can delete updates" on public.updates for delete to authenticated using (true);
+
+-- update_reactions table policies
+-- Visitors only interact via RPCs to prevent reading all rows or inserting-then-selecting
+drop policy if exists "admin can view all reactions" on public.update_reactions;
+create policy "admin can view all reactions" on public.update_reactions for select to authenticated using (true);
+
+-- RPC: Toggle reaction
+drop function if exists public.toggle_update_reaction(uuid, uuid, text);
+create function public.toggle_update_reaction(p_update_id uuid, p_visitor_id uuid, p_reaction text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  existing_id uuid;
+begin
+  select id into existing_id 
+  from public.update_reactions
+  where update_id = p_update_id and visitor_id = p_visitor_id and reaction = p_reaction;
+
+  if existing_id is not null then
+    delete from public.update_reactions where id = existing_id;
+  else
+    insert into public.update_reactions (update_id, visitor_id, reaction)
+    values (p_update_id, p_visitor_id, p_reaction);
+  end if;
+end;
+$$;
+grant execute on function public.toggle_update_reaction(uuid, uuid, text) to anon, authenticated;
+
+-- RPC: Get updates with reaction counts (Returns JSON aggregated reaction counts)
+drop function if exists public.get_updates_with_reactions();
+create function public.get_updates_with_reactions()
+returns table (
+  id uuid,
+  title text,
+  content text,
+  created_at timestamptz,
+  reactions jsonb
+)
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select 
+    u.id, 
+    u.title,
+    u.content, 
+    u.created_at,
+    coalesce(
+      (
+        select jsonb_object_agg(r.reaction, r.count)
+        from (
+          select reaction, count(*)::int
+          from public.update_reactions
+          where update_id = u.id
+          group by reaction
+        ) r
+      ), 
+      '{}'::jsonb
+    ) as reactions
+  from public.updates u
+  order by u.created_at desc;
+$$;
+grant execute on function public.get_updates_with_reactions() to anon, authenticated;
+
+-- Add new tables to Realtime
+alter publication supabase_realtime add table public.updates, public.update_reactions;

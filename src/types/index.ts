@@ -50,3 +50,19 @@ export interface ActiveQuestionWithCount {
   accepting_responses: boolean
   created_at: string
 }
+
+export interface Update {
+  id: string
+  title: string
+  content: string
+  created_at: string
+  reactions?: Record<string, number>
+}
+
+export interface UpdateReaction {
+  id: string
+  update_id: string
+  visitor_id: string
+  reaction: string
+  created_at: string
+}

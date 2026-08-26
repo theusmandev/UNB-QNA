@@ -4,13 +4,15 @@ import { channelName } from '../lib/supabase'
 import AdminOverviewTab from './AdminOverviewTab'
 import AdminQuestionsTab from './AdminQuestionsTab'
 import AdminResponsesTab from './AdminResponsesTab'
+import AdminUpdatesTab from './AdminUpdatesTab'
 
-type Tab = 'overview' | 'questions' | 'responses'
+type Tab = 'overview' | 'questions' | 'responses' | 'updates'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'questions', label: 'Questions' },
   { id: 'responses', label: 'Responses' },
+  { id: 'updates', label: 'Updates' },
 ]
 
 export default function AdminPanel() {
@@ -68,6 +70,7 @@ export default function AdminPanel() {
             onSelectQuestion={setSelectedQuestionId} 
           />
         )}
+        {tab === 'updates' && <AdminUpdatesTab />}
       </main>
     </div>
   )
