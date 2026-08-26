@@ -5,9 +5,10 @@ import type { Question } from '../types'
 
 interface QuestionWithCount extends Question {
   response_count: number
+  unread_count: number
 }
 
-export default function AdminQuestionsTab() {
+export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses?: (id: string) => void }) {
   const [questions, setQuestions] = useState<QuestionWithCount[]>([])
   const [newText, setNewText] = useState('')
   const [creating, setCreating] = useState(false)
@@ -28,7 +29,18 @@ export default function AdminQuestionsTab() {
           .from('responses')
           .select('*', { count: 'exact', head: true })
           .eq('question_id', q.id)
-        return { ...q, response_count: count ?? 0 }
+        
+        let unreadCount = count ?? 0
+        if (q.last_viewed_at) {
+          const { count: unread } = await supabase
+            .from('responses')
+            .select('*', { count: 'exact', head: true })
+            .eq('question_id', q.id)
+            .gt('created_at', q.last_viewed_at)
+          unreadCount = unread ?? 0
+        }
+        
+        return { ...q, response_count: count ?? 0, unread_count: unreadCount }
       })
     )
     setQuestions(withCounts)
@@ -110,18 +122,31 @@ export default function AdminQuestionsTab() {
             <li key={q.id} className="rounded-xl bg-white p-3 shadow-sm">
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm text-wa-ink">{q.question_text}</p>
-                <span
-                  className={`flex-none rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                    q.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                  }`}
-                >
-                  {q.is_active ? 'Active' : 'Inactive'}
-                </span>
+                <div className="flex items-center gap-2">
+                  {q.unread_count > 0 && (
+                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
+                      {q.unread_count}
+                    </span>
+                  )}
+                  <span
+                    className={`flex-none rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      q.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    {q.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
               </div>
               <p className="mt-1 text-[11px] text-wa-muted">
                 {q.response_count} response{q.response_count === 1 ? '' : 's'} · /r/{q.slug}
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  onClick={() => onViewResponses?.(q.id)}
+                  className="rounded-lg bg-wa-teal px-2.5 py-1 text-xs font-medium text-white shadow-sm"
+                >
+                  View responses
+                </button>
                 <button
                   onClick={() => copyLink(q.slug)}
                   className="rounded-lg border border-black/10 px-2.5 py-1 text-xs font-medium text-wa-ink"

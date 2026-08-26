@@ -16,6 +16,12 @@ const TABS: { id: Tab; label: string }[] = [
 export default function AdminPanel() {
   const { signOut } = useAuth()
   const [tab, setTab] = useState<Tab>('overview')
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string>('all')
+
+  const handleViewResponses = (questionId: string) => {
+    setSelectedQuestionId(questionId)
+    setTab('responses')
+  }
 
   return (
     <div className="min-h-screen bg-wa-bg pb-10">
@@ -36,7 +42,13 @@ export default function AdminPanel() {
           {TABS.map((t) => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id)}
+              onClick={() => {
+                setTab(t.id)
+                if (t.id === 'questions') {
+                   // reset filter when navigating back to questions tab manually
+                   setSelectedQuestionId('all')
+                }
+              }}
               className={`px-3 py-2 text-sm font-medium border-b-2 transition ${
                 tab === t.id ? 'border-white text-white' : 'border-transparent text-white/60'
               }`}
@@ -49,8 +61,13 @@ export default function AdminPanel() {
 
       <main className="mx-auto max-w-4xl px-4 py-5">
         {tab === 'overview' && <AdminOverviewTab />}
-        {tab === 'questions' && <AdminQuestionsTab />}
-        {tab === 'responses' && <AdminResponsesTab />}
+        {tab === 'questions' && <AdminQuestionsTab onViewResponses={handleViewResponses} />}
+        {tab === 'responses' && (
+          <AdminResponsesTab 
+            selectedQuestionId={selectedQuestionId} 
+            onSelectQuestion={setSelectedQuestionId} 
+          />
+        )}
       </main>
     </div>
   )

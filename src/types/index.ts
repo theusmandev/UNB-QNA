@@ -4,6 +4,7 @@ export interface Question {
   question_text: string
   is_active: boolean
   created_at: string
+  last_viewed_at?: string
 }
 
 /** Full row — only ever fetched by an authenticated admin. Contains PII. */

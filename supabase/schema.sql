@@ -13,6 +13,7 @@ create table if not exists public.questions (
   slug          text not null unique,
   question_text text not null,
   is_active     boolean not null default true,
+  last_viewed_at timestamptz,
   created_at    timestamptz not null default now()
 );
 

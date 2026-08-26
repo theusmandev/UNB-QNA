@@ -2,13 +2,29 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Question, ResponseRow } from '../types'
 
-export default function AdminResponsesTab() {
+export default function AdminResponsesTab({
+  selectedQuestionId = 'all',
+  onSelectQuestion,
+}: {
+  selectedQuestionId?: string
+  onSelectQuestion?: (id: string) => void
+}) {
   const [questions, setQuestions] = useState<Question[]>([])
-  const [filter, setFilter] = useState<string>('all')
+  const filter = selectedQuestionId
   const [responses, setResponses] = useState<ResponseRow[]>([])
   const [loading, setLoading] = useState(true)
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({})
   const [publishing, setPublishing] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (filter !== 'all') {
+      supabase
+        .from('questions')
+        .update({ last_viewed_at: new Date().toISOString() })
+        .eq('id', filter)
+        .then()
+    }
+  }, [filter])
 
   async function load() {
     setLoading(true)
@@ -58,7 +74,7 @@ export default function AdminResponsesTab() {
         <label className="text-xs font-medium text-wa-muted">Question</label>
         <select
           value={filter}
-          onChange={(e) => setFilter(e.target.value)}
+          onChange={(e) => onSelectQuestion?.(e.target.value)}
           className="rounded-lg border border-black/10 px-2.5 py-1.5 text-sm outline-none"
         >
           <option value="all">All questions</option>
