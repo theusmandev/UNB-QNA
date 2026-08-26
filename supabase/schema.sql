@@ -176,7 +176,8 @@ returns table (
   question_text text,
   response_count integer,
   published_reply_count integer,
-  accepting_responses boolean
+  accepting_responses boolean,
+  created_at timestamptz
 )
 language sql
 security definer
@@ -188,7 +189,8 @@ as $$
     q.question_text,
     count(r.id)::integer as response_count,
     count(r.id) filter (where r.reply_text is not null)::integer as published_reply_count,
-    q.accepting_responses
+    q.accepting_responses,
+    q.created_at
   from public.questions q
   left join public.responses r on r.question_id = q.id
   where q.is_active = true

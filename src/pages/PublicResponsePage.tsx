@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useLocalIdentity } from '../hooks/useLocalIdentity'
+import { formatSimpleDate } from '../lib/date'
 import Header from '../components/Header'
 import ChatBubble from '../components/ChatBubble'
 import ComposeBar from '../components/ComposeBar'
@@ -171,6 +172,11 @@ export default function PublicResponsePage() {
             >
               {question.question_text}
             </p>
+            <div className="mt-1 flex items-center justify-end">
+              <span className="text-[10px] text-black/40">
+                Posted on {formatSimpleDate(question.created_at)}
+              </span>
+            </div>
           </div>
         </div>
 

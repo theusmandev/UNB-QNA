@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { channelName, supabase } from '../lib/supabase'
+import { formatSimpleDate } from '../lib/date'
 import Header from '../components/Header'
 import type { ActiveQuestionWithCount } from '../types'
 
@@ -74,13 +75,16 @@ export default function Home() {
                         )}
                       </div>
                     </div>
-                    {unreadCount > 0 && (
-                      <div className="flex flex-none flex-col items-end justify-center">
+                    <div className="flex flex-none flex-col items-end justify-center gap-1">
+                      <span className="text-[11px] text-wa-muted">{formatSimpleDate(q.created_at)}</span>
+                      {unreadCount > 0 ? (
                         <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
                           {unreadCount}
                         </span>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="h-5" />
+                      )}
+                    </div>
                   </div>
                 </li>
               )

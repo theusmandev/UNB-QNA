@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { publicBaseUrl, supabase } from '../lib/supabase'
+import { formatSimpleDate } from '../lib/date'
 import { slugify } from '../lib/slug'
 import type { Question } from '../types'
 
@@ -181,7 +182,7 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
                 </div>
               </div>
               <p className="mt-1 text-[11px] text-wa-muted">
-                {q.response_count} response{q.response_count === 1 ? '' : 's'} · /r/{q.slug}
+                {q.response_count} response{q.response_count === 1 ? '' : 's'} · /r/{q.slug} · Posted {formatSimpleDate(q.created_at)}
               </p>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-black/5 pt-3">
                 <div className="flex items-center gap-2">
