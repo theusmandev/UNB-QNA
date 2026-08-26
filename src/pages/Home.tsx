@@ -13,6 +13,15 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [activeTab, setActiveTab] = useState<'chats' | 'updates'>('chats')
+  
+  // PWA Install states
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [showIOSPrompt, setShowIOSPrompt] = useState(false)
+  const [isInstalled, setIsInstalled] = useState(false)
+  const [dismissedInstall, setDismissedInstall] = useState(() => {
+    return localStorage.getItem('unb_dismiss_install') === 'true'
+  })
+
   const navigate = useNavigate()
   
   // We just need the visitorId for reactions
@@ -36,7 +45,45 @@ export default function Home() {
       setLoading(false)
     }
     loadInitial()
-  }, [])
+
+    // PWA: Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+      setIsInstalled(true)
+    }
+
+    // PWA: Android / Desktop install prompt
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+    }
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+
+    // PWA: iOS Safari manual install prompt (only show if not installed and not dismissed)
+    const ua = window.navigator.userAgent
+    const isIOS = /ipad|iphone|ipod/.test(ua.toLowerCase())
+    if (isIOS && !(window.navigator as any).standalone && !isInstalled) {
+      setShowIOSPrompt(true)
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    }
+  }, [isInstalled])
+
+  async function handleInstallApp() {
+    if (!deferredPrompt) return
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    if (outcome === 'accepted') {
+      setIsInstalled(true)
+    }
+    setDeferredPrompt(null)
+  }
+
+  function dismissInstall() {
+    setDismissedInstall(true)
+    localStorage.setItem('unb_dismiss_install', 'true')
+  }
 
   async function loadMore() {
     if (loadingMore || !hasMore) return
@@ -59,6 +106,35 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-[100dvh] bg-white">
       <Header subtitle="Response Collector" />
+
+      {/* PWA Install Banner */}
+      {!isInstalled && !dismissedInstall && (deferredPrompt || showIOSPrompt) && (
+        <div className="bg-wa-teal/10 px-4 py-3 flex items-center justify-between gap-3 border-b border-wa-teal/20">
+          <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-semibold text-wa-ink">Install Urdu Novel Bank</h4>
+            <p className="text-xs text-wa-muted mt-0.5">
+              {showIOSPrompt 
+                ? "Tap Share in your browser, then 'Add to Home Screen' for quick access." 
+                : "Add this app to your home screen for quick access."}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-none">
+            {deferredPrompt && (
+              <button 
+                onClick={handleInstallApp}
+                className="rounded-full bg-wa-teal px-3 py-1.5 text-xs font-semibold text-white shadow-sm"
+              >
+                Install
+              </button>
+            )}
+            <button onClick={dismissInstall} className="text-wa-muted p-1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto bg-gray-50/50">
         {activeTab === 'chats' ? (
