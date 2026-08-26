@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { channelName, supabase } from '../lib/supabase'
 import { formatSimpleDate } from '../lib/date'
+import { isUrdu } from '../lib/isUrdu'
 import { useLocalIdentity } from '../hooks/useLocalIdentity'
 import Header from '../components/Header'
 import UpdatesTab from '../components/UpdatesTab'
@@ -172,9 +173,9 @@ export default function Home() {
                       <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <p 
-                            dir={/[\u0600-\u06FF]/.test(q.question_text) ? 'rtl' : 'ltr'}
+                            dir={isUrdu(q.question_text) ? 'rtl' : 'ltr'}
                             className={`truncate text-[15px] font-semibold text-wa-ink ${
-                              /[\u0600-\u06FF]/.test(q.question_text) ? 'urdu-text text-right' : 'text-left'
+                              isUrdu(q.question_text) ? 'urdu-text text-right' : 'text-left'
                             }`}
                           >
                             {q.question_text}

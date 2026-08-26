@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatSimpleDate } from '../lib/date'
 import type { Update } from '../types'
@@ -16,7 +16,83 @@ DOMPurify.addHook('afterSanitizeAttributes', function(node) {
   }
 });
 
+const CustomToolbar = () => (
+  <div id="toolbar" className="border-b border-black/10 flex flex-wrap gap-y-2 p-2 bg-gray-50 rounded-t-lg">
+    <span className="ql-formats mr-2">
+      <button className="ql-bold" />
+      <button className="ql-italic" />
+      <button className="ql-underline" />
+      <button className="ql-strike" />
+      <button className="ql-clean" />
+    </span>
+    <span className="ql-formats mr-2">
+      <select className="ql-header" defaultValue="">
+        <option value="1">H1</option>
+        <option value="2">H2</option>
+        <option value="3">H3</option>
+        <option value="">Normal</option>
+      </select>
+    </span>
+    <span className="ql-formats mr-2">
+      <button className="ql-list" value="ordered" />
+      <button className="ql-list" value="bullet" />
+      <button className="ql-blockquote" />
+      <button className="ql-direction" value="rtl" />
+    </span>
+    <span className="ql-formats mr-2 flex items-center">
+      <select className="ql-align" />
+      <button className="ql-ltr !w-auto px-1.5 font-semibold text-xs text-gray-600 border border-gray-300 rounded mx-0.5 hover:bg-gray-200">LTR</button>
+      <button className="ql-rtl !w-auto px-1.5 font-semibold text-xs text-gray-600 border border-gray-300 rounded mx-0.5 hover:bg-gray-200">RTL</button>
+    </span>
+    <span className="ql-formats mr-2">
+      <button className="ql-link" />
+      <button className="ql-image" />
+    </span>
+    <span className="ql-formats flex items-center">
+      <button className="ql-undo !w-auto px-1.5 font-semibold text-xs text-gray-600 border border-gray-300 rounded mx-0.5 hover:bg-gray-200">Undo</button>
+      <button className="ql-redo !w-auto px-1.5 font-semibold text-xs text-gray-600 border border-gray-300 rounded mx-0.5 hover:bg-gray-200">Redo</button>
+    </span>
+  </div>
+);
+
 export default function AdminUpdatesTab() {
+  const quillRef = useRef<ReactQuill>(null)
+  
+  const modules = useMemo(() => ({
+    toolbar: {
+      container: '#toolbar',
+      handlers: {
+        ltr: function() {
+          const quill = quillRef.current?.getEditor()
+          if (quill) {
+            quill.format('direction', false)
+            quill.format('align', false)
+          }
+        },
+        rtl: function() {
+          const quill = quillRef.current?.getEditor()
+          if (quill) {
+            quill.format('direction', 'rtl')
+            quill.format('align', 'right')
+          }
+        },
+        undo: function() {
+          const quill = quillRef.current?.getEditor()
+          ;(quill as any)?.history.undo()
+        },
+        redo: function() {
+          const quill = quillRef.current?.getEditor()
+          ;(quill as any)?.history.redo()
+        }
+      }
+    },
+    history: {
+      delay: 500,
+      maxStack: 100,
+      userOnly: true
+    }
+  }), [])
+
   const [updates, setUpdates] = useState<Update[]>([])
   const [newTitle, setNewTitle] = useState('')
   const [newContent, setNewContent] = useState('')
@@ -92,13 +168,16 @@ export default function AdminUpdatesTab() {
             placeholder="Update Title"
             className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-wa-teal font-medium"
           />
-          <div className="bg-white [&_.ql-container]:min-h-[120px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[120px] rounded-lg border border-black/10 overflow-hidden focus-within:border-wa-teal">
+          <div className="bg-white [&_.ql-container]:min-h-[250px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[250px] rounded-lg border border-black/10 overflow-hidden focus-within:border-wa-teal flex flex-col">
+            <CustomToolbar />
             <ReactQuill
+              ref={quillRef}
               theme="snow"
+              modules={modules}
               value={newContent}
               onChange={setNewContent}
               placeholder="Write your announcement or update here..."
-              className="border-none"
+              className="border-none flex-1 [&_.ql-container.ql-snow]:border-none [&_.ql-editor]:resize-y"
             />
           </div>
           <div className="flex justify-end">
@@ -125,8 +204,8 @@ export default function AdminUpdatesTab() {
                 className="whitespace-pre-wrap text-[15px] leading-relaxed text-wa-ink [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5]"
                 dangerouslySetInnerHTML={{ 
                   __html: DOMPurify.sanitize(update.content, { 
-                    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'blockquote', 'h1', 'h2', 'h3'], 
-                    ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class'] 
+                    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'strike', 'blockquote', 'h1', 'h2', 'h3'], 
+                    ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class', 'dir'] 
                   }) 
                 }}
               />

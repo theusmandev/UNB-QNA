@@ -1,4 +1,4 @@
-import { isArabicScript } from '../lib/slug'
+import { isUrdu } from '../lib/isUrdu'
 import { linkify } from '../lib/linkify'
 
 type Variant = 'reader' | 'reader-pending' | 'channel'
@@ -22,7 +22,7 @@ function formatTime(iso?: string) {
 }
 
 export default function ChatBubble({ text, variant, label, timestamp, showTick }: ChatBubbleProps) {
-  const rtl = isArabicScript(text)
+  const rtl = isUrdu(text)
   const isOutgoingSide = variant === 'channel'
 
   const bubbleColor =

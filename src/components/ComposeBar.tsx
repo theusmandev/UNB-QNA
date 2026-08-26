@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { isArabicScript } from '../lib/slug'
+import { isUrdu } from '../lib/isUrdu'
 
 interface ComposeBarProps {
   onSend: (message: string) => Promise<void> | void
@@ -9,7 +9,7 @@ interface ComposeBarProps {
 export default function ComposeBar({ onSend, disabled }: ComposeBarProps) {
   const [value, setValue] = useState('')
   const [sending, setSending] = useState(false)
-  const rtl = isArabicScript(value)
+  const rtl = !!value && isUrdu(value)
 
   async function handleSend() {
     const trimmed = value.trim()

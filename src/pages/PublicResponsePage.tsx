@@ -7,6 +7,7 @@ import Header from '../components/Header'
 import ChatBubble from '../components/ChatBubble'
 import ComposeBar from '../components/ComposeBar'
 import IdentityModal from '../components/IdentityModal'
+import { isUrdu } from '../lib/isUrdu'
 import type { PublicFeedItem, Question, VisitorIdentity } from '../types'
 
 export default function PublicResponsePage() {
@@ -163,12 +164,11 @@ export default function PublicResponsePage() {
           <div className="rounded-lg bg-[#FCF3D7] px-3 py-2.5 shadow-bubble">
             <p className="text-xs font-semibold text-wa-teal">Question</p>
             <p
-              dir={/[\u0600-\u06FF]/.test(question.question_text) ? 'rtl' : 'ltr'}
-              className={
-                /[\u0600-\u06FF]/.test(question.question_text)
-                  ? 'urdu-text mt-0.5 text-right text-wa-ink'
-                  : 'mt-0.5 text-left text-[0.95rem] leading-relaxed text-wa-ink'
-              }
+              dir={isUrdu(question.question_text) ? 'rtl' : 'ltr'}
+              className={`text-[15px] leading-relaxed break-words whitespace-pre-wrap
+                ${isUrdu(question.question_text)
+                  ? 'urdu-text mt-0.5 text-right text-wa-ink' 
+                  : 'text-left text-wa-ink'}`}
             >
               {question.question_text}
             </p>

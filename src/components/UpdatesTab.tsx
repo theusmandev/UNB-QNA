@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatSimpleDate } from '../lib/date'
+import { isUrdu } from '../lib/isUrdu'
 import DOMPurify from 'dompurify'
 import type { Update } from '../types'
 
@@ -196,11 +197,12 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
             {isExpanded && (
               <>
                 <div 
-                  className="whitespace-pre-wrap text-[15px] leading-relaxed text-wa-ink mt-2 [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5] [&_img]:max-w-full [&_img]:rounded-lg [&_img]:my-2"
+                  className={`whitespace-pre-wrap text-[15px] leading-relaxed mt-2 [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5] [&_img]:max-w-full [&_img]:rounded-lg [&_img]:my-2
+                    ${isUrdu(update.content) ? 'urdu-text text-right text-wa-ink' : 'text-left text-wa-ink'}`}
                   dangerouslySetInnerHTML={{ 
                     __html: DOMPurify.sanitize(update.content, { 
-                      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'blockquote', 'h1', 'h2', 'h3'], 
-                      ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class'] 
+                      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'strike', 'blockquote', 'h1', 'h2', 'h3'], 
+                      ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class', 'dir'] 
                     }) 
                   }}
                 />
