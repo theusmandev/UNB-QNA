@@ -168,6 +168,30 @@ $$;
 
 grant execute on function public.get_response_count(text) to anon, authenticated;
 
+create or replace function public.get_active_questions_with_counts()
+returns table (
+  slug text,
+  question_text text,
+  response_count integer
+)
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select 
+    q.slug, 
+    q.question_text,
+    count(r.id)::integer as response_count
+  from public.questions q
+  left join public.responses r on r.question_id = q.id
+  where q.is_active = true
+  group by q.id
+  order by q.created_at desc;
+$$;
+
+grant execute on function public.get_active_questions_with_counts() to anon, authenticated;
+
 -- ============================================================================
 -- NOTES
 -- ============================================================================

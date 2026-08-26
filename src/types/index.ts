@@ -38,3 +38,10 @@ export interface LocalPendingResponse {
   message: string
   created_at: string
 }
+
+/** Safe public shape returned by the get_active_questions_with_counts RPC */
+export interface ActiveQuestionWithCount {
+  slug: string
+  question_text: string
+  response_count: number
+}
