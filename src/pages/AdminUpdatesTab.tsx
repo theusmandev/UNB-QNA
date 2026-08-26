@@ -2,8 +2,19 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatSimpleDate } from '../lib/date'
 import type { Update } from '../types'
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
+import DOMPurify from 'dompurify'
 
 const REACTIONS = ['👍', '❤️', '😂', '🎉']
+
+// Configure DOMPurify to ensure links open in a new tab
+DOMPurify.addHook('afterSanitizeAttributes', function(node) {
+  if ('target' in node) {
+    node.setAttribute('target', '_blank');
+    node.setAttribute('rel', 'noopener noreferrer');
+  }
+});
 
 export default function AdminUpdatesTab() {
   const [updates, setUpdates] = useState<Update[]>([])
@@ -81,12 +92,15 @@ export default function AdminUpdatesTab() {
             placeholder="Update Title"
             className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-wa-teal font-medium"
           />
-          <textarea
-            value={newContent}
-            onChange={(e) => setNewContent(e.target.value)}
-            placeholder="Write your announcement or update here..."
-            className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-wa-teal min-h-[80px] resize-y"
-          />
+          <div className="bg-white [&_.ql-container]:min-h-[120px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[120px] rounded-lg border border-black/10 overflow-hidden focus-within:border-wa-teal">
+            <ReactQuill
+              theme="snow"
+              value={newContent}
+              onChange={setNewContent}
+              placeholder="Write your announcement or update here..."
+              className="border-none"
+            />
+          </div>
           <div className="flex justify-end">
             <button
               onClick={handleCreate}
@@ -107,9 +121,15 @@ export default function AdminUpdatesTab() {
           {updates.map((update) => (
             <li key={update.id} className="rounded-xl bg-white p-4 shadow-sm">
               <h3 className="text-base font-semibold text-wa-ink mb-1">{update.title}</h3>
-              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-wa-ink">
-                {update.content}
-              </p>
+              <div 
+                className="whitespace-pre-wrap text-[15px] leading-relaxed text-wa-ink [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5]"
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(update.content, { 
+                    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'blockquote', 'h1', 'h2', 'h3'], 
+                    ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class'] 
+                  }) 
+                }}
+              />
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-black/5 pt-3">
                 <div className="flex items-center gap-2">
                   {REACTIONS.map((emoji) => {

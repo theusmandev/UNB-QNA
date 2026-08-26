@@ -1,7 +1,16 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatSimpleDate } from '../lib/date'
+import DOMPurify from 'dompurify'
 import type { Update } from '../types'
+
+// Configure DOMPurify to ensure links open in a new tab
+DOMPurify.addHook('afterSanitizeAttributes', function(node) {
+  if ('target' in node) {
+    node.setAttribute('target', '_blank');
+    node.setAttribute('rel', 'noopener noreferrer');
+  }
+});
 
 const REACTIONS = ['👍', '❤️', '😂', '🎉']
 
@@ -186,9 +195,15 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
 
             {isExpanded && (
               <>
-                <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-wa-ink mt-2">
-                  {update.content}
-                </p>
+                <div 
+                  className="whitespace-pre-wrap text-[15px] leading-relaxed text-wa-ink mt-2 [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5] [&_img]:max-w-full [&_img]:rounded-lg [&_img]:my-2"
+                  dangerouslySetInnerHTML={{ 
+                    __html: DOMPurify.sanitize(update.content, { 
+                      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'blockquote', 'h1', 'h2', 'h3'], 
+                      ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class'] 
+                    }) 
+                  }}
+                />
                 
                 <div className="mt-3 flex items-center justify-between border-t border-black/5 pt-3">
                   <div className="flex flex-wrap items-center gap-2">
