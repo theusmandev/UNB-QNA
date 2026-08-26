@@ -57,6 +57,19 @@ export default function AdminUpdatesTab() {
     load()
   }
 
+  async function togglePin(update: Update) {
+    const { error } = await supabase
+      .from('updates')
+      .update({ is_pinned: !update.is_pinned, pinned_at: !update.is_pinned ? new Date().toISOString() : null })
+      .eq('id', update.id)
+      
+    if (error) {
+      alert(error.message)
+    } else {
+      load()
+    }
+  }
+
   return (
     <div className="space-y-5">
       <div className="rounded-xl bg-white p-4 shadow-sm">
@@ -117,6 +130,19 @@ export default function AdminUpdatesTab() {
                   <span className="text-xs text-wa-muted">
                     {formatSimpleDate(update.created_at)}
                   </span>
+                  <button
+                    onClick={() => togglePin(update)}
+                    className={`flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium ${
+                      update.is_pinned 
+                        ? 'border-wa-teal bg-wa-teal/10 text-wa-teal' 
+                        : 'border-black/10 text-wa-ink hover:bg-gray-50'
+                    }`}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill={update.is_pinned ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                    </svg>
+                    {update.is_pinned ? 'Pinned' : 'Pin'}
+                  </button>
                   <button
                     onClick={() => handleDelete(update.id)}
                     className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50"

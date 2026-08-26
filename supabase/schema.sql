@@ -18,6 +18,9 @@ create table if not exists public.questions (
   created_at    timestamptz not null default now()
 );
 
+alter table public.questions add column if not exists is_pinned boolean not null default false;
+alter table public.questions add column if not exists pinned_at timestamptz;
+
 -- Raw responses. Contains PII (reader_name, reader_email) — never exposed to
 -- anon directly. Public visitors only ever see safe columns via the
 -- get_public_feed()/get_response_count() RPCs below, and only for rows that
@@ -170,14 +173,20 @@ $$;
 
 grant execute on function public.get_response_count(text) to anon, authenticated;
 
-create or replace function public.get_active_questions_with_counts()
+drop function if exists public.get_active_questions_with_counts();
+create or replace function public.get_active_questions_with_counts(
+  p_limit int default null,
+  p_offset int default null
+)
 returns table (
   slug text,
   question_text text,
   response_count integer,
   published_reply_count integer,
   accepting_responses boolean,
-  created_at timestamptz
+  created_at timestamptz,
+  is_pinned boolean,
+  pinned_at timestamptz
 )
 language sql
 security definer
@@ -190,12 +199,16 @@ as $$
     count(r.id)::integer as response_count,
     count(r.id) filter (where r.reply_text is not null)::integer as published_reply_count,
     q.accepting_responses,
-    q.created_at
+    q.created_at,
+    q.is_pinned,
+    q.pinned_at
   from public.questions q
   left join public.responses r on r.question_id = q.id
   where q.is_active = true
   group by q.id
-  order by q.created_at desc;
+  order by q.is_pinned desc, q.pinned_at desc nulls last, q.created_at desc
+  limit p_limit
+  offset p_offset;
 $$;
 
 grant execute on function public.get_active_questions_with_counts() to anon, authenticated;
@@ -203,6 +216,28 @@ grant execute on function public.get_active_questions_with_counts() to anon, aut
 -- ============================================================================
 -- TRIGGERS
 -- ============================================================================
+
+create or replace function public.enforce_max_pinned()
+returns trigger
+language plpgsql
+as $$
+declare
+  pinned_count int;
+begin
+  if NEW.is_pinned = true and (TG_OP = 'INSERT' or OLD.is_pinned = false) then
+    execute format('select count(*) from public.%I where is_pinned = true', TG_TABLE_NAME) into pinned_count;
+    if pinned_count >= 3 then
+      raise exception 'You can only pin up to 3 %', (case when TG_TABLE_NAME = 'questions' then 'chats' else 'updates' end);
+    end if;
+  end if;
+  return NEW;
+end;
+$$;
+
+drop trigger if exists enforce_max_pinned_questions on public.questions;
+create trigger enforce_max_pinned_questions
+  before insert or update on public.questions
+  for each row execute function public.enforce_max_pinned();
 
 -- 1. Create the trigger function
 create or replace function public.lock_reader_name_by_email()
@@ -269,6 +304,14 @@ create table if not exists public.updates (
   created_at    timestamptz not null default now()
 );
 
+alter table public.updates add column if not exists is_pinned boolean not null default false;
+alter table public.updates add column if not exists pinned_at timestamptz;
+
+drop trigger if exists enforce_max_pinned_updates on public.updates;
+create trigger enforce_max_pinned_updates
+  before insert or update on public.updates
+  for each row execute function public.enforce_max_pinned();
+
 create table if not exists public.update_reactions (
   id          uuid primary key default gen_random_uuid(),
   update_id   uuid not null references public.updates(id) on delete cascade,
@@ -330,13 +373,18 @@ grant execute on function public.toggle_update_reaction(uuid, uuid, text) to ano
 
 -- RPC: Get updates with reaction counts (Returns JSON aggregated reaction counts)
 drop function if exists public.get_updates_with_reactions();
-create function public.get_updates_with_reactions()
+create or replace function public.get_updates_with_reactions(
+  p_limit int default null,
+  p_offset int default null
+)
 returns table (
   id uuid,
   title text,
   content text,
   created_at timestamptz,
-  reactions jsonb
+  reactions jsonb,
+  is_pinned boolean,
+  pinned_at timestamptz
 )
 language sql
 security definer
@@ -359,9 +407,13 @@ as $$
         ) r
       ), 
       '{}'::jsonb
-    ) as reactions
+    ) as reactions,
+    u.is_pinned,
+    u.pinned_at
   from public.updates u
-  order by u.created_at desc;
+  order by u.is_pinned desc, u.pinned_at desc nulls last, u.created_at desc
+  limit p_limit
+  offset p_offset;
 $$;
 grant execute on function public.get_updates_with_reactions() to anon, authenticated;
 

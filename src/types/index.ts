@@ -6,6 +6,8 @@ export interface Question {
   accepting_responses: boolean
   created_at: string
   last_viewed_at?: string
+  is_pinned?: boolean
+  pinned_at?: string | null
 }
 
 /** Full row — only ever fetched by an authenticated admin. Contains PII. */
@@ -49,6 +51,8 @@ export interface ActiveQuestionWithCount {
   published_reply_count: number
   accepting_responses: boolean
   created_at: string
+  is_pinned: boolean
+  pinned_at: string | null
 }
 
 export interface Update {
@@ -57,6 +61,8 @@ export interface Update {
   content: string
   created_at: string
   reactions?: Record<string, number>
+  is_pinned: boolean
+  pinned_at: string | null
 }
 
 export interface UpdateReaction {

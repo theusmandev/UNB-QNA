@@ -104,6 +104,19 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
     load()
   }
 
+  async function togglePin(q: QuestionWithCount) {
+    const { error } = await supabase
+      .from('questions')
+      .update({ is_pinned: !q.is_pinned, pinned_at: !q.is_pinned ? new Date().toISOString() : null })
+      .eq('id', q.id)
+      
+    if (error) {
+      alert(error.message)
+    } else {
+      load()
+    }
+  }
+
   async function toggleAccepting(q: QuestionWithCount) {
     await supabase.from('questions').update({ accepting_responses: !q.accepting_responses }).eq('id', q.id)
     load()
@@ -216,6 +229,19 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
                     className="rounded-lg border border-black/10 px-2.5 py-1 text-xs font-medium text-wa-ink"
                   >
                     {q.is_active ? 'Deactivate' : 'Activate'}
+                  </button>
+                  <button
+                    onClick={() => togglePin(q)}
+                    className={`flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium ${
+                      q.is_pinned 
+                        ? 'border-wa-teal bg-wa-teal/10 text-wa-teal' 
+                        : 'border-black/10 text-wa-ink'
+                    }`}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill={q.is_pinned ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                    </svg>
+                    {q.is_pinned ? 'Pinned' : 'Pin'}
                   </button>
                   <button
                     onClick={() => handleDelete(q)}

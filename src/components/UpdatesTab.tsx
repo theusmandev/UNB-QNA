@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatSimpleDate } from '../lib/date'
 import type { Update } from '../types'
@@ -12,8 +12,16 @@ interface UpdatesTabProps {
 export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
   const [updates, setUpdates] = useState<Update[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadedCount, setLoadedCount] = useState(20)
   const [myReactions, setMyReactions] = useState<Record<string, string[]>>({})
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+
+  const loadedCountRef = useRef(loadedCount)
+  useEffect(() => {
+    loadedCountRef.current = loadedCount
+  }, [loadedCount])
 
   function toggleExpand(id: string) {
     setExpandedIds((prev) => {
@@ -25,8 +33,20 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
   }
 
   async function load() {
-    const { data } = await supabase.rpc('get_updates_with_reactions')
-    setUpdates((data as Update[]) ?? [])
+    const limitToFetch = loadedCountRef.current
+    const { data } = await supabase.rpc('get_updates_with_reactions', {
+      p_limit: limitToFetch + 1,
+      p_offset: 0
+    })
+    const items = (data as Update[]) ?? []
+    
+    if (items.length > limitToFetch) {
+      setHasMore(true)
+      setUpdates(items.slice(0, limitToFetch))
+    } else {
+      setHasMore(false)
+      setUpdates(items)
+    }
     
     // Also load the current visitor's reactions so we can highlight what they clicked
     if (visitorId) {
@@ -45,6 +65,30 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
 
     setLoading(false)
   }
+
+  async function loadMore() {
+    if (loadingMore || !hasMore) return
+    setLoadingMore(true)
+    const nextLimit = loadedCount + 10
+    
+    const { data } = await supabase.rpc('get_updates_with_reactions', {
+      p_limit: nextLimit + 1,
+      p_offset: 0
+    })
+    const items = (data as Update[]) ?? []
+    
+    if (items.length > nextLimit) {
+      setHasMore(true)
+      setUpdates(items.slice(0, nextLimit))
+    } else {
+      setHasMore(false)
+      setUpdates(items)
+    }
+    
+    setLoadedCount(nextLimit)
+    setLoadingMore(false)
+  }
+
 
   useEffect(() => {
     load()
@@ -124,9 +168,16 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
           >
             <div className="flex justify-between items-start gap-2">
               <h3 className="text-base font-semibold text-wa-ink">{update.title}</h3>
-              <span className="text-[10px] text-wa-muted whitespace-nowrap mt-1">
-                {formatSimpleDate(update.created_at)}
-              </span>
+              <div className="flex items-center gap-1 mt-1">
+                {update.is_pinned && (
+                  <svg className="text-wa-muted" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                  </svg>
+                )}
+                <span className="text-[10px] text-wa-muted whitespace-nowrap">
+                  {formatSimpleDate(update.created_at)}
+                </span>
+              </div>
             </div>
 
             {!isExpanded && (
@@ -183,6 +234,17 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
           </div>
         )
       })}
+      {hasMore && (
+        <div className="flex justify-center py-4">
+          <button
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="rounded-full bg-white px-5 py-2 text-[14px] font-medium text-wa-teal shadow-sm border border-wa-teal/20 active:bg-gray-50 disabled:opacity-50 transition-all hover:shadow-md"
+          >
+            {loadingMore ? 'Loading…' : 'Load more'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
