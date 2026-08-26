@@ -11,6 +11,8 @@ interface QuestionWithCount extends Question {
 export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses?: (id: string) => void }) {
   const [questions, setQuestions] = useState<QuestionWithCount[]>([])
   const [newText, setNewText] = useState('')
+  const [customSlug, setCustomSlug] = useState('')
+  const [slugError, setSlugError] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [loading, setLoading] = useState(true)
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null)
@@ -62,16 +64,38 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
   }, [])
 
   async function handleCreate() {
+    setSlugError(null)
     const text = newText.trim()
     if (!text || creating) return
-    setCreating(true)
-    const slug = slugify(text)
-    const { error } = await supabase.from('questions').insert({ slug, question_text: text })
-    setCreating(false)
-    if (!error) {
-      setNewText('')
-      load()
+
+    let finalSlug = ''
+    if (customSlug.trim()) {
+      const normalized = customSlug.trim().toLowerCase().replace(/\s+/g, '-')
+      if (!/^[a-z0-9-]+$/.test(normalized)) {
+        setSlugError("Link can only contain lowercase letters, numbers, and hyphens.")
+        return
+      }
+      finalSlug = normalized
+    } else {
+      finalSlug = slugify(text)
     }
+
+    setCreating(true)
+    const { error } = await supabase.from('questions').insert({ slug: finalSlug, question_text: text })
+    setCreating(false)
+    
+    if (error) {
+      if (error.code === '23505') {
+        setSlugError("This link is already taken, try another.")
+      } else {
+        setSlugError("An error occurred while creating the question.")
+      }
+      return
+    }
+    
+    setNewText('')
+    setCustomSlug('')
+    load()
   }
 
   async function toggleActive(q: QuestionWithCount) {
@@ -96,20 +120,29 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
     <div className="space-y-5">
       <div className="rounded-xl bg-white p-4 shadow-sm">
         <h2 className="mb-2 text-sm font-semibold text-wa-ink">Ask a new question</h2>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <input
-            value={newText}
-            onChange={(e) => setNewText(e.target.value)}
-            placeholder="What would you like readers to answer?"
-            className="flex-1 rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-wa-teal"
-          />
-          <button
-            onClick={handleCreate}
-            disabled={creating || !newText.trim()}
-            className="rounded-lg bg-wa-teal px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-          >
-            {creating ? 'Posting…' : 'Post question'}
-          </button>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              value={newText}
+              onChange={(e) => setNewText(e.target.value)}
+              placeholder="What would you like readers to answer?"
+              className="flex-1 rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-wa-teal"
+            />
+            <input
+              value={customSlug}
+              onChange={(e) => setCustomSlug(e.target.value)}
+              placeholder="Custom link (optional)"
+              className="sm:w-48 rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-wa-teal"
+            />
+            <button
+              onClick={handleCreate}
+              disabled={creating || !newText.trim()}
+              className="rounded-lg bg-wa-teal px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              {creating ? 'Posting…' : 'Post question'}
+            </button>
+          </div>
+          {slugError && <p className="text-xs font-medium text-red-600">{slugError}</p>}
         </div>
       </div>
 
