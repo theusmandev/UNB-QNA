@@ -14,6 +14,7 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [activeTab, setActiveTab] = useState<'chats' | 'updates'>('chats')
+  const [hasUnreadUpdates, setHasUnreadUpdates] = useState(false)
   
   // PWA Install states
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
@@ -66,10 +67,36 @@ export default function Home() {
       setShowIOSPrompt(true)
     }
 
+    // Check for unread updates
+    async function checkUpdates() {
+      const { data } = await supabase.from('updates').select('created_at').order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (data) {
+        const lastSeen = localStorage.getItem('unb_last_seen_update')
+        if (!lastSeen || new Date(data.created_at) > new Date(lastSeen)) {
+          setHasUnreadUpdates(true)
+        }
+      }
+    }
+    checkUpdates()
+
+    const channel = supabase.channel('home-updates-badge')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'updates' }, () => {
+        setHasUnreadUpdates(true)
+      })
+      .subscribe()
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+      supabase.removeChannel(channel)
     }
   }, [isInstalled])
+
+  useEffect(() => {
+    if (activeTab === 'updates') {
+      setHasUnreadUpdates(false)
+      localStorage.setItem('unb_last_seen_update', new Date().toISOString())
+    }
+  }, [activeTab])
 
   async function handleInstallApp() {
     if (!deferredPrompt) return
@@ -103,6 +130,16 @@ export default function Home() {
     }
     setLoadingMore(false)
   }
+
+  let totalUnreadChats = 0
+  try {
+    const viewed = JSON.parse(localStorage.getItem('unb_viewed_counts') || '{}')
+    questions.forEach(q => {
+      if (q.published_reply_count > 0) {
+        totalUnreadChats += Math.max(0, q.published_reply_count - (viewed[q.slug] || 0))
+      }
+    })
+  } catch {}
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-white">
@@ -234,22 +271,34 @@ export default function Home() {
       <div className="flex bg-[#F0F0F0] border-t border-black/5 pb-safe">
         <button 
           onClick={() => setActiveTab('chats')}
-          className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-1 transition-colors ${activeTab === 'chats' ? 'text-wa-teal' : 'text-wa-muted hover:bg-black/5'}`}
+          className={`relative flex-1 flex flex-col items-center justify-center py-2.5 gap-1 transition-colors ${activeTab === 'chats' ? 'text-wa-teal' : 'text-wa-muted hover:bg-black/5'}`}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
+          <div className="relative">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            {totalUnreadChats > 0 && (
+              <span className="absolute -top-1.5 -right-2.5 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-green-500 px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-[#F0F0F0]">
+                {totalUnreadChats}
+              </span>
+            )}
+          </div>
           <span className="text-[10px] font-medium">Chats</span>
         </button>
 
         <button 
           onClick={() => setActiveTab('updates')}
-          className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-1 transition-colors ${activeTab === 'updates' ? 'text-wa-teal' : 'text-wa-muted hover:bg-black/5'}`}
+          className={`relative flex-1 flex flex-col items-center justify-center py-2.5 gap-1 transition-colors ${activeTab === 'updates' ? 'text-wa-teal' : 'text-wa-muted hover:bg-black/5'}`}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M12 8v4l3 3"></path>
-          </svg>
+          <div className="relative">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 8v4l3 3"></path>
+            </svg>
+            {hasUnreadUpdates && (
+              <span className="absolute 1 top-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-[#F0F0F0]" />
+            )}
+          </div>
           <span className="text-[10px] font-medium">Updates</span>
         </button>
       </div>
