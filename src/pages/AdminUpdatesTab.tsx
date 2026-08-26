@@ -83,6 +83,16 @@ export default function AdminUpdatesTab() {
         redo: function() {
           const quill = quillRef.current?.getEditor()
           ;(quill as any)?.history.redo()
+        },
+        image: function() {
+          const url = prompt('Enter the image URL (e.g. from Blogger):')
+          if (url) {
+            const quill = quillRef.current?.getEditor()
+            if (quill) {
+              const range = quill.getSelection(true)
+              quill.insertEmbed(range.index, 'image', url)
+            }
+          }
         }
       }
     },
