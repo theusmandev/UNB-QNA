@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatSimpleDate } from '../lib/date'
+import { isUrdu } from '../lib/isUrdu'
 import type { Update } from '../types'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
@@ -209,7 +210,12 @@ export default function AdminUpdatesTab() {
         <ul className="space-y-3">
           {updates.map((update) => (
             <li key={update.id} className="rounded-xl bg-white p-4 shadow-sm">
-              <h3 className="text-base font-semibold text-wa-ink mb-1">{update.title}</h3>
+              <h3 
+                dir={isUrdu(update.title) ? 'rtl' : 'ltr'}
+                className={`text-base font-semibold text-wa-ink mb-1 ${isUrdu(update.title) ? 'urdu-text text-right' : 'text-left'}`}
+              >
+                {update.title}
+              </h3>
               <div 
                 className="whitespace-pre-wrap text-[15px] leading-relaxed text-wa-ink [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5]"
                 dangerouslySetInnerHTML={{ 

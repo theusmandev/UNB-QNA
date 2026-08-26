@@ -177,7 +177,12 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
             className={`rounded-xl bg-[#FCF3D7] p-3 shadow-sm ${!isExpanded ? 'cursor-pointer hover:bg-[#FBEBB5] transition-colors' : ''}`}
           >
             <div className="flex justify-between items-start gap-2">
-              <h3 className="text-base font-semibold text-wa-ink">{update.title}</h3>
+              <h3 
+                dir={isUrdu(update.title) ? 'rtl' : 'ltr'}
+                className={`text-base font-semibold text-wa-ink ${isUrdu(update.title) ? 'urdu-text text-right' : 'text-left'}`}
+              >
+                {update.title}
+              </h3>
               <div className="flex items-center gap-1 mt-1">
                 {update.is_pinned && (
                   <svg className="text-wa-muted" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
