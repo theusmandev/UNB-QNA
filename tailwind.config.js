@@ -17,7 +17,7 @@ export default {
       },
       fontFamily: {
         sans: ['"Inter"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
-        nastaliq: ['"Noto Nastaliq Urdu"', 'serif'],
+        nastaliq: ['"Gulzar"', '"Noto Nastaliq Urdu"', 'serif'],
       },
       boxShadow: {
         bubble: '0 1px 0.5px rgba(0,0,0,0.13)',
