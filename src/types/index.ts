@@ -47,4 +47,5 @@ export interface ActiveQuestionWithCount {
   question_text: string
   response_count: number
   published_reply_count: number
+  accepting_responses: boolean
 }

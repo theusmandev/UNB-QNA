@@ -20,7 +20,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-white">
-      <Header subtitle="Active Questions" />
+      <Header subtitle="Response Collector" />
 
       <div className="flex-1 overflow-y-auto">
         {loading ? (
@@ -63,9 +63,16 @@ export default function Home() {
                       >
                         {q.question_text}
                       </p>
-                      <p className="mt-0.5 text-[13px] text-wa-muted">
-                        {q.response_count} response{q.response_count === 1 ? '' : 's'}
-                      </p>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <p className="text-[13px] text-wa-muted">
+                          {q.response_count} response{q.response_count === 1 ? '' : 's'}
+                        </p>
+                        {q.accepting_responses && (
+                          <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
+                            Active
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {unreadCount > 0 && (
                       <div className="flex flex-none flex-col items-end justify-center">

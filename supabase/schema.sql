@@ -175,7 +175,8 @@ returns table (
   slug text,
   question_text text,
   response_count integer,
-  published_reply_count integer
+  published_reply_count integer,
+  accepting_responses boolean
 )
 language sql
 security definer
@@ -186,7 +187,8 @@ as $$
     q.slug, 
     q.question_text,
     count(r.id)::integer as response_count,
-    count(r.id) filter (where r.reply_text is not null)::integer as published_reply_count
+    count(r.id) filter (where r.reply_text is not null)::integer as published_reply_count,
+    q.accepting_responses
   from public.questions q
   left join public.responses r on r.question_id = q.id
   where q.is_active = true
