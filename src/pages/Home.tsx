@@ -282,7 +282,7 @@ export default function Home() {
         )}
       </div>
       
-      <div className="flex bg-[#F0F0F0] border-t border-black/5 pb-safe">
+      <div className="sticky bottom-0 z-40 flex w-full bg-[#F0F0F0] border-t border-black/5 pb-safe mt-auto">
         <button 
           onClick={() => setActiveTab('chats')}
           className={`relative flex-1 flex flex-col items-center justify-center py-2.5 gap-1 transition-colors ${activeTab === 'chats' ? 'text-wa-teal' : 'text-wa-muted hover:bg-black/5'}`}
