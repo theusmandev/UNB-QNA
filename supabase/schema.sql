@@ -419,3 +419,30 @@ grant execute on function public.get_updates_with_reactions() to anon, authentic
 
 -- Add new tables to Realtime
 alter publication supabase_realtime add table public.updates, public.update_reactions;
+
+-- ============================================================================
+-- SITE SETTINGS
+-- ============================================================================
+
+create table if not exists public.site_settings (
+  id integer primary key check (id = 1),
+  maintenance_mode boolean not null default false,
+  updated_at timestamptz not null default now()
+);
+
+-- Insert the single row if it doesn't exist
+insert into public.site_settings (id, maintenance_mode)
+values (1, false)
+on conflict (id) do nothing;
+
+-- RLS
+alter table public.site_settings enable row level security;
+
+drop policy if exists "public can view site settings" on public.site_settings;
+create policy "public can view site settings" on public.site_settings for select to anon, authenticated using (true);
+
+drop policy if exists "admin can update site settings" on public.site_settings;
+create policy "admin can update site settings" on public.site_settings for update to authenticated using (true) with check (true);
+
+-- Add to realtime
+alter publication supabase_realtime add table public.site_settings;
