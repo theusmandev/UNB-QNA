@@ -45,4 +45,5 @@ export interface ActiveQuestionWithCount {
   slug: string
   question_text: string
   response_count: number
+  published_reply_count: number
 }

@@ -33,30 +33,51 @@ export default function Home() {
           </div>
         ) : (
           <ul className="divide-y divide-black/5">
-            {questions.map((q) => (
-              <li
-                key={q.slug}
-                onClick={() => navigate(`/r/${q.slug}`)}
-                className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-gray-50 active:bg-gray-100"
-              >
-                <div className="flex h-12 w-12 flex-none items-center justify-center rounded-full bg-wa-header text-xl font-semibold text-white">
-                  {channelName.charAt(0)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p 
-                    dir={/[\u0600-\u06FF]/.test(q.question_text) ? 'rtl' : 'ltr'}
-                    className={`truncate text-[15px] font-semibold text-wa-ink ${
-                      /[\u0600-\u06FF]/.test(q.question_text) ? 'urdu-text text-right' : 'text-left'
-                    }`}
-                  >
-                    {q.question_text}
-                  </p>
-                  <p className="mt-0.5 text-[13px] text-wa-muted">
-                    {q.response_count} response{q.response_count === 1 ? '' : 's'}
-                  </p>
-                </div>
-              </li>
-            ))}
+            {questions.map((q) => {
+              let unreadCount = 0
+              if (q.published_reply_count > 0) {
+                try {
+                  const viewed = JSON.parse(localStorage.getItem('unb_viewed_counts') || '{}')
+                  unreadCount = Math.max(0, q.published_reply_count - (viewed[q.slug] || 0))
+                } catch {
+                  unreadCount = q.published_reply_count
+                }
+              }
+
+              return (
+                <li
+                  key={q.slug}
+                  onClick={() => navigate(`/r/${q.slug}`)}
+                  className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-gray-50 active:bg-gray-100"
+                >
+                  <div className="flex h-12 w-12 flex-none items-center justify-center rounded-full bg-wa-header text-xl font-semibold text-white">
+                    {channelName.charAt(0)}
+                  </div>
+                  <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p 
+                        dir={/[\u0600-\u06FF]/.test(q.question_text) ? 'rtl' : 'ltr'}
+                        className={`truncate text-[15px] font-semibold text-wa-ink ${
+                          /[\u0600-\u06FF]/.test(q.question_text) ? 'urdu-text text-right' : 'text-left'
+                        }`}
+                      >
+                        {q.question_text}
+                      </p>
+                      <p className="mt-0.5 text-[13px] text-wa-muted">
+                        {q.response_count} response{q.response_count === 1 ? '' : 's'}
+                      </p>
+                    </div>
+                    {unreadCount > 0 && (
+                      <div className="flex flex-none flex-col items-end justify-center">
+                        <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
+                          {unreadCount}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         )}
       </div>

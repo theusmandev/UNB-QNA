@@ -173,7 +173,8 @@ create or replace function public.get_active_questions_with_counts()
 returns table (
   slug text,
   question_text text,
-  response_count integer
+  response_count integer,
+  published_reply_count integer
 )
 language sql
 security definer
@@ -183,7 +184,8 @@ as $$
   select 
     q.slug, 
     q.question_text,
-    count(r.id)::integer as response_count
+    count(r.id)::integer as response_count,
+    count(r.id) filter (where r.reply_text is not null)::integer as published_reply_count
   from public.questions q
   left join public.responses r on r.question_id = q.id
   where q.is_active = true

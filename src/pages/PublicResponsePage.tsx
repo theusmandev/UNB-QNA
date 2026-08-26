@@ -54,8 +54,17 @@ export default function PublicResponsePage() {
       supabase.rpc('get_response_count', { p_slug: slug }),
     ])
 
-    setFeed((feedData as PublicFeedItem[]) ?? [])
+    const loadedFeed = (feedData as PublicFeedItem[]) ?? []
+    setFeed(loadedFeed)
     if (typeof countData === 'number') setCount(countData)
+
+    try {
+      const viewed = JSON.parse(localStorage.getItem('unb_viewed_counts') || '{}')
+      viewed[slug] = loadedFeed.length
+      localStorage.setItem('unb_viewed_counts', JSON.stringify(viewed))
+    } catch {
+      // ignore localStorage errors
+    }
   }, [slug])
 
   useEffect(() => {
