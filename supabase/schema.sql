@@ -13,6 +13,7 @@ create table if not exists public.questions (
   slug          text not null unique,
   question_text text not null,
   is_active     boolean not null default true,
+  accepting_responses boolean not null default true,
   last_viewed_at timestamptz,
   created_at    timestamptz not null default now()
 );
@@ -97,7 +98,7 @@ create policy "anyone can submit a response to an active question"
   with check (
     exists (
       select 1 from public.questions q
-      where q.id = question_id and q.is_active = true
+      where q.id = question_id and q.is_active = true and q.accepting_responses = true
     )
   );
 
@@ -194,6 +195,50 @@ as $$
 $$;
 
 grant execute on function public.get_active_questions_with_counts() to anon, authenticated;
+
+-- ============================================================================
+-- TRIGGERS
+-- ============================================================================
+
+-- 1. Create the trigger function
+create or replace function public.lock_reader_name_by_email()
+returns trigger
+language plpgsql
+security definer -- Crucial: allows anon visitors to query existing responses internally
+set search_path = public -- Security best practice for SECURITY DEFINER
+as $$
+declare
+  existing_name text;
+begin
+  -- Normalize the incoming email to lowercase
+  NEW.reader_email := lower(NEW.reader_email);
+
+  -- Find the earliest non-null name associated with this email
+  select reader_name into existing_name
+  from public.responses
+  where lower(reader_email) = NEW.reader_email
+    and reader_name is not null
+  order by created_at asc
+  limit 1;
+
+  -- If a previous name was found, silently overwrite the incoming name
+  if found then
+    NEW.reader_name := existing_name;
+  end if;
+
+  return NEW;
+end;
+$$;
+
+-- 2. Attach the trigger to the responses table
+drop trigger if exists tr_lock_reader_name on public.responses;
+create trigger tr_lock_reader_name
+  before insert on public.responses
+  for each row
+  execute function public.lock_reader_name_by_email();
+
+-- 3. Add an index to keep the lookup lightning fast
+create index if not exists responses_lower_email_idx on public.responses(lower(reader_email));
 
 -- ============================================================================
 -- NOTES

@@ -3,6 +3,7 @@ export interface Question {
   slug: string
   question_text: string
   is_active: boolean
+  accepting_responses: boolean
   created_at: string
   last_viewed_at?: string
 }

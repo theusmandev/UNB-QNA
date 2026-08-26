@@ -39,7 +39,7 @@ export default function PublicResponsePage() {
   const load = useCallback(async () => {
     const { data: q, error: qErr } = await supabase
       .from('questions')
-      .select('id, slug, question_text, is_active, created_at')
+      .select('id, slug, question_text, is_active, accepting_responses, created_at')
       .eq('slug', slug)
       .maybeSingle()
 
@@ -221,7 +221,7 @@ export default function PublicResponsePage() {
 
       {error && <p className="bg-red-50 px-4 py-1.5 text-center text-xs text-red-600">{error}</p>}
 
-      {question.is_active ? (
+      {question.accepting_responses ? (
         <ComposeBar onSend={handleSend} />
       ) : (
         <div className="border-t border-black/5 bg-[#F0F0F0] px-4 py-3 text-center text-xs text-wa-muted">

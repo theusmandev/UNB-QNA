@@ -103,6 +103,11 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
     load()
   }
 
+  async function toggleAccepting(q: QuestionWithCount) {
+    await supabase.from('questions').update({ accepting_responses: !q.accepting_responses }).eq('id', q.id)
+    load()
+  }
+
   async function handleDelete(q: QuestionWithCount) {
     if (!confirm(`Delete this question and all ${q.response_count} response(s)? This can't be undone.`)) return
     await supabase.from('questions').delete().eq('id', q.id)
@@ -161,6 +166,11 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
                       {q.unread_count}
                     </span>
                   )}
+                  {!q.accepting_responses && (
+                    <span className="flex-none rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+                      Closed to new responses
+                    </span>
+                  )}
                   <span
                     className={`flex-none rounded-full px-2 py-0.5 text-[10px] font-medium ${
                       q.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
@@ -173,31 +183,46 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
               <p className="mt-1 text-[11px] text-wa-muted">
                 {q.response_count} response{q.response_count === 1 ? '' : 's'} · /r/{q.slug}
               </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button
-                  onClick={() => onViewResponses?.(q.id)}
-                  className="rounded-lg bg-wa-teal px-2.5 py-1 text-xs font-medium text-white shadow-sm"
-                >
-                  View responses
-                </button>
-                <button
-                  onClick={() => copyLink(q.slug)}
-                  className="rounded-lg border border-black/10 px-2.5 py-1 text-xs font-medium text-wa-ink"
-                >
-                  {copiedSlug === q.slug ? 'Copied!' : 'Copy link'}
-                </button>
-                <button
-                  onClick={() => toggleActive(q)}
-                  className="rounded-lg border border-black/10 px-2.5 py-1 text-xs font-medium text-wa-ink"
-                >
-                  {q.is_active ? 'Deactivate' : 'Activate'}
-                </button>
-                <button
-                  onClick={() => handleDelete(q)}
-                  className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600"
-                >
-                  Delete
-                </button>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-black/5 pt-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleAccepting(q)}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      q.accepting_responses ? 'bg-wa-teal' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      q.accepting_responses ? 'translate-x-4' : 'translate-x-0'
+                    }`} />
+                  </button>
+                  <span className="text-xs font-medium text-wa-ink">Accepting responses</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => onViewResponses?.(q.id)}
+                    className="rounded-lg bg-wa-teal px-2.5 py-1 text-xs font-medium text-white shadow-sm"
+                  >
+                    View responses
+                  </button>
+                  <button
+                    onClick={() => copyLink(q.slug)}
+                    className="rounded-lg border border-black/10 px-2.5 py-1 text-xs font-medium text-wa-ink"
+                  >
+                    {copiedSlug === q.slug ? 'Copied!' : 'Copy link'}
+                  </button>
+                  <button
+                    onClick={() => toggleActive(q)}
+                    className="rounded-lg border border-black/10 px-2.5 py-1 text-xs font-medium text-wa-ink"
+                  >
+                    {q.is_active ? 'Deactivate' : 'Activate'}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(q)}
+                    className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </li>
           ))}
