@@ -9,6 +9,12 @@ import Header from '../components/Header'
 import UpdatesTab from '../components/UpdatesTab'
 import type { ActiveQuestionWithCount } from '../types'
 
+declare global {
+  interface Window {
+    globalDeferredPrompt: any;
+  }
+}
+
 export default function Home() {
   const [questions, setQuestions] = useState<ActiveQuestionWithCount[]>([])
   const [loading, setLoading] = useState(true)
@@ -61,8 +67,13 @@ export default function Home() {
     }
 
     // PWA: Android / Desktop install prompt
+    if (window.globalDeferredPrompt) {
+      setDeferredPrompt(window.globalDeferredPrompt)
+    }
+    
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
+      window.globalDeferredPrompt = e
       setDeferredPrompt(e)
     }
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
