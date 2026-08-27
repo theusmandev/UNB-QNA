@@ -35,10 +35,17 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
   const bubbleColor =
     variant === 'channel' ? 'bg-wa-outgoing' : variant === 'reader-pending' ? 'bg-white/70' : 'bg-wa-incoming'
 
-  // Long-press and double-tap state
   const [showPicker, setShowPicker] = useState(false)
+  const [pickerPosition, setPickerPosition] = useState<'top' | 'bottom'>('top')
+  const bubbleRef = useRef<HTMLDivElement>(null)
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastTapRef = useRef<number>(0)
+  
+  const [isExpanded, setIsExpanded] = useState(false)
+  const CHARACTER_LIMIT = 350
+  const isLong = text.length > CHARACTER_LIMIT
+  const shouldTruncate = isLong && !isExpanded
+  const displayText = shouldTruncate ? text.slice(0, CHARACTER_LIMIT) + '...' : text
   
   // Cleanup timer on unmount
   useEffect(() => {
@@ -46,6 +53,19 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
       if (pressTimer.current) clearTimeout(pressTimer.current)
     }
   }, [])
+
+  const checkPositionAndShow = () => {
+    if (bubbleRef.current) {
+      const rect = bubbleRef.current.getBoundingClientRect()
+      // If less than 60px from the top of the viewport, show below
+      if (rect.top < 60) {
+        setPickerPosition('bottom')
+      } else {
+        setPickerPosition('top')
+      }
+    }
+    setShowPicker(true)
+  }
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (variant !== 'channel' || !id || !onReact) return
@@ -55,14 +75,14 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
     const now = Date.now()
     if (now - lastTapRef.current < 300) {
       // Double tap detected
-      setShowPicker(true)
       if (pressTimer.current) clearTimeout(pressTimer.current)
+      checkPositionAndShow()
       return
     }
     lastTapRef.current = now
     
     pressTimer.current = setTimeout(() => {
-      setShowPicker(true)
+      checkPositionAndShow()
     }, 500)
   }
 
@@ -76,7 +96,7 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
   const handleContextMenu = (e: React.MouseEvent) => {
     if (variant === 'channel' && id && onReact) {
       e.preventDefault()
-      setShowPicker(true)
+      checkPositionAndShow()
     }
   }
 
@@ -107,6 +127,7 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
     <>
       <div className={`flex w-full ${isOutgoingSide ? 'justify-end' : 'justify-start'} px-3 py-1 relative`}>
         <div
+          ref={bubbleRef}
           onPointerDown={handlePointerDown}
           onPointerUp={cancelPress}
           onPointerMove={cancelPress}
@@ -132,7 +153,9 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
         >
           {showPicker && (
             <div 
-              className={`absolute -top-10 z-50 flex items-center gap-1 rounded-full bg-white px-2 py-1.5 shadow-lg border border-black/5 ${isOutgoingSide ? 'right-0' : 'left-0'}`}
+              className={`absolute z-50 flex items-center gap-1 rounded-full bg-white px-2 py-1.5 shadow-lg border border-black/5 ${
+                pickerPosition === 'top' ? '-top-11' : '-bottom-11'
+              } ${isOutgoingSide ? 'right-0' : 'left-0'}`}
               onPointerDown={(e) => e.stopPropagation()} // Prevent bubble press
             >
               {EMOJIS.map(emoji => (
@@ -160,8 +183,26 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
               rtl ? 'urdu-text text-right' : 'text-left',
             ].join(' ')}
           >
-            {variant === 'channel' ? linkify(text) : text}
+            {variant === 'channel' ? linkify(displayText) : displayText}
+            {shouldTruncate && (
+              <span 
+                onClick={(e) => { e.stopPropagation(); setIsExpanded(true) }}
+                className="text-wa-teal font-medium cursor-pointer select-none mx-1 inline-block"
+                style={{ touchAction: 'manipulation' }}
+              >
+                Read more
+              </span>
+            )}
           </p>
+          {isLong && isExpanded && (
+            <div 
+              onClick={(e) => { e.stopPropagation(); setIsExpanded(false) }}
+              className={`text-wa-teal text-[0.9rem] font-medium cursor-pointer select-none mt-1 ${rtl ? 'text-right' : 'text-left'}`}
+              style={{ touchAction: 'manipulation' }}
+            >
+              Show less
+            </div>
+          )}
 
           <div className={`mt-1 flex items-end justify-between gap-3`}>
             {/* Reaction Badge (Inline) */}
