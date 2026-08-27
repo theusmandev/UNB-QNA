@@ -185,23 +185,27 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
           >
             {variant === 'channel' ? linkify(displayText) : displayText}
             {shouldTruncate && (
-              <span 
+              <button 
+                type="button"
                 onClick={(e) => { e.stopPropagation(); setIsExpanded(true) }}
-                className="text-wa-teal font-medium cursor-pointer select-none mx-1 inline-block"
+                onPointerDown={(e) => e.stopPropagation()}
+                className="text-wa-teal font-medium cursor-pointer select-none mx-1 inline-block bg-transparent border-none p-0"
                 style={{ touchAction: 'manipulation' }}
               >
                 Read more
-              </span>
+              </button>
             )}
           </p>
           {isLong && isExpanded && (
-            <div 
+            <button 
+              type="button"
               onClick={(e) => { e.stopPropagation(); setIsExpanded(false) }}
-              className={`text-wa-teal text-[0.9rem] font-medium cursor-pointer select-none mt-1 ${rtl ? 'text-right' : 'text-left'}`}
+              onPointerDown={(e) => e.stopPropagation()}
+              className={`text-wa-teal text-[0.9rem] font-medium cursor-pointer select-none mt-1 block w-full bg-transparent border-none p-0 ${rtl ? 'text-right' : 'text-left'}`}
               style={{ touchAction: 'manipulation' }}
             >
               Show less
-            </div>
+            </button>
           )}
 
           <div className={`mt-1 flex items-end justify-between gap-3`}>
