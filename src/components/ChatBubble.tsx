@@ -82,13 +82,24 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
 
   // Calculate total reactions and top emojis
   const totalReactions = reactions ? Object.values(reactions).reduce((a, b) => a + b, 0) : 0
-  const topEmojis = reactions 
-    ? Object.entries(reactions)
-        .filter(([_, count]) => count > 0)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-        .map(([emoji]) => emoji)
-    : []
+  
+  let topEmojis: string[] = []
+  if (reactions) {
+    const validEntries = Object.entries(reactions).filter(([_, count]) => count > 0)
+    
+    validEntries.sort((a, b) => {
+      const aIsMine = myReactions.includes(a[0])
+      const bIsMine = myReactions.includes(b[0])
+      
+      if (aIsMine && !bIsMine) return -1
+      if (!aIsMine && bIsMine) return 1
+      
+      // Fallback to sorting by count descending
+      return b[1] - a[1]
+    })
+    
+    topEmojis = validEntries.slice(0, 3).map(([emoji]) => emoji)
+  }
   
   const hasMyReaction = myReactions.length > 0
 
