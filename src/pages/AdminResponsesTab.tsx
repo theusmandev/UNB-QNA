@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { linkify } from '../lib/linkify'
 import type { Question, ResponseRow } from '../types'
+
+interface ReaderStat {
+  total_count: number
+  replied_count: number
+}
 
 export default function AdminResponsesTab({
   selectedQuestionId = 'all',
@@ -23,6 +28,8 @@ export default function AdminResponsesTab({
   const [loadingMore, setLoadingMore] = useState(false)
   const limit = 20
 
+  const [readerStats, setReaderStats] = useState<Record<string, ReaderStat>>({})
+
   useEffect(() => {
     supabase.from('questions').select('*').order('created_at', { ascending: false }).then(({ data }) => {
       setQuestions(data ?? [])
@@ -37,6 +44,23 @@ export default function AdminResponsesTab({
         .eq('id', filter)
         .then()
     }
+  }, [filter])
+
+  const loadReaderStats = useCallback(async () => {
+    if (filter === 'all') {
+      setReaderStats({})
+      return
+    }
+    const { data } = await supabase.rpc('get_reader_stats_for_question', {
+      p_question_id: filter,
+    })
+    const map: Record<string, ReaderStat> = {}
+    if (data) {
+      for (const row of data as { reader_email: string; total_count: number; replied_count: number }[]) {
+        map[row.reader_email] = { total_count: row.total_count, replied_count: row.replied_count }
+      }
+    }
+    setReaderStats(map)
   }, [filter])
 
   async function loadResponses(currentOffset = 0, isLoadMore = false, customLimit?: number) {
@@ -82,7 +106,8 @@ export default function AdminResponsesTab({
   useEffect(() => {
     setOffset(0)
     loadResponses(0, false)
-  }, [filter, statusFilter])
+    loadReaderStats()
+  }, [filter, statusFilter, loadReaderStats])
 
   useEffect(() => {
     const channel = supabase
@@ -92,13 +117,14 @@ export default function AdminResponsesTab({
           loadResponses(0, false, prev + limit)
           return prev
         })
+        loadReaderStats()
       })
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [filter, statusFilter])
+  }, [filter, statusFilter, loadReaderStats])
 
   function loadMore() {
     const nextOffset = offset + limit
@@ -118,6 +144,7 @@ export default function AdminResponsesTab({
     setPublishing(null)
     if (!error) {
       loadResponses(0, false, offset + limit)
+      loadReaderStats()
     }
   }
 
@@ -157,43 +184,56 @@ export default function AdminResponsesTab({
       {!loading && responses.length === 0 && <p className="text-sm text-wa-muted">No responses here yet.</p>}
 
       <ul className="space-y-3">
-        {responses.map((r) => (
-          <li key={r.id} className="rounded-xl bg-white p-4 shadow-sm">
-            <div className="flex flex-wrap items-baseline justify-between gap-1">
-              <p className="text-sm font-medium text-wa-ink">{r.reader_name || 'Anonymous Reader'}</p>
-              <p className="text-[11px] text-wa-muted">{r.reader_email}</p>
-            </div>
-            <p className="mt-1 whitespace-pre-wrap text-sm text-wa-ink">{r.message}</p>
+        {responses.map((r) => {
+          const stats = readerStats[r.reader_email]
+          const displayName = r.reader_name || 'This reader'
 
-            {r.reply_text ? (
-              <div className="mt-3 rounded-lg bg-wa-outgoing p-3">
-                <p className="text-xs font-semibold text-wa-teal">Published reply</p>
-                <p className="mt-0.5 whitespace-pre-wrap text-sm text-wa-ink">{linkify(r.reply_text)}</p>
+          return (
+            <li key={r.id} className="rounded-xl bg-white p-4 shadow-sm">
+              <div className="flex flex-wrap items-baseline justify-between gap-1">
+                <p className="text-sm font-medium text-wa-ink">{r.reader_name || 'Anonymous Reader'}</p>
+                <p className="text-[11px] text-wa-muted">{r.reader_email}</p>
               </div>
-            ) : (
-              <div className="mt-3">
-                <p className="mb-1.5 rounded-md bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-800">
-                  This will publish the response text and your reply publicly — the reader's name and
-                  email stay private.
-                </p>
-                <textarea
-                  value={replyDrafts[r.id] || ''}
-                  onChange={(e) => setReplyDrafts((d) => ({ ...d, [r.id]: e.target.value }))}
-                  placeholder="Write your public reply…"
-                  rows={2}
-                  className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-wa-teal"
-                />
-                <button
-                  onClick={() => publish(r)}
-                  disabled={publishing === r.id || !(replyDrafts[r.id] || '').trim()}
-                  className="mt-2 rounded-lg bg-wa-teal px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
-                >
-                  {publishing === r.id ? 'Publishing…' : 'Reply & Publish'}
-                </button>
-              </div>
-            )}
-          </li>
-        ))}
+              <p className="mt-1 whitespace-pre-wrap text-sm text-wa-ink">{r.message}</p>
+
+              {r.reply_text ? (
+                <div className="mt-3 rounded-lg bg-wa-outgoing p-3">
+                  <p className="text-xs font-semibold text-wa-teal">Published reply</p>
+                  <p className="mt-0.5 whitespace-pre-wrap text-sm text-wa-ink">{linkify(r.reply_text)}</p>
+                </div>
+              ) : (
+                <div className="mt-3">
+                  {stats && stats.total_count > 1 && (
+                    <p className="mb-1.5 rounded-md bg-blue-50 px-2.5 py-1.5 text-[11px] text-blue-700">
+                      📋 {displayName} has sent {stats.total_count} message{stats.total_count === 1 ? '' : 's'} for this question
+                      {stats.replied_count > 0 && (
+                        <> · {stats.replied_count} already replied</>
+                      )}
+                    </p>
+                  )}
+                  <p className="mb-1.5 rounded-md bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-800">
+                    This will publish the response text and your reply publicly — the reader's name and
+                    email stay private.
+                  </p>
+                  <textarea
+                    value={replyDrafts[r.id] || ''}
+                    onChange={(e) => setReplyDrafts((d) => ({ ...d, [r.id]: e.target.value }))}
+                    placeholder="Write your public reply…"
+                    rows={2}
+                    className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-wa-teal"
+                  />
+                  <button
+                    onClick={() => publish(r)}
+                    disabled={publishing === r.id || !(replyDrafts[r.id] || '').trim()}
+                    className="mt-2 rounded-lg bg-wa-teal px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                  >
+                    {publishing === r.id ? 'Publishing…' : 'Reply & Publish'}
+                  </button>
+                </div>
+              )}
+            </li>
+          )
+        })}
       </ul>
       {hasMore && responses.length > 0 && (
         <div className="mt-4 flex justify-center">

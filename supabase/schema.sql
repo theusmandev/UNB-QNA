@@ -537,3 +537,29 @@ grant execute on function public.get_public_feed(text) to anon, authenticated;
 
 -- Add new table to Realtime
 alter publication supabase_realtime add table public.response_reactions;
+
+-- ============================================================================
+-- ADMIN: READER STATS PER QUESTION
+-- ============================================================================
+-- Returns per-reader message counts for a given question, used by the admin
+-- Responses tab to show context like "Usman has sent 5 messages, 3 replied".
+-- SECURITY DEFINER + GRANT to authenticated only — reader_email is PII.
+
+DROP FUNCTION IF EXISTS public.get_reader_stats_for_question(uuid);
+CREATE OR REPLACE FUNCTION public.get_reader_stats_for_question(p_question_id uuid)
+RETURNS TABLE(reader_email text, total_count bigint, replied_count bigint)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT
+    r.reader_email,
+    COUNT(*)::bigint        AS total_count,
+    COUNT(r.reply_text)::bigint AS replied_count
+  FROM public.responses r
+  WHERE r.question_id = p_question_id
+  GROUP BY r.reader_email;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_reader_stats_for_question(uuid) TO authenticated;
