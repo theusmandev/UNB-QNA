@@ -113,11 +113,10 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
               : {}
           }
           className={[
-            'relative max-w-[82%] sm:max-w-[70%] rounded-lg px-3 pt-2 shadow-bubble transition-transform active:scale-[0.98]',
+            'relative max-w-[82%] sm:max-w-[70%] rounded-lg px-3 py-2 shadow-bubble transition-transform active:scale-[0.98]',
             bubbleColor,
             isOutgoingSide ? 'bubble-tail-out' : 'bubble-tail-in',
             variant === 'reader-pending' ? 'border border-dashed border-wa-muted/40' : '',
-            totalReactions > 0 ? 'pb-4 mb-3' : 'pb-2'
           ].join(' ')}
         >
           {showPicker && (
@@ -152,45 +151,51 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
           >
             {variant === 'channel' ? linkify(text) : text}
           </p>
-          <div className={`mt-1 flex items-center gap-1 ${rtl ? 'justify-start' : 'justify-end'}`}>
-            {variant === 'reader-pending' && (
-              <span className="text-[11px] italic text-wa-muted">Sent · awaiting reply</span>
-            )}
-            {timestamp && <span className="text-[10px] text-wa-muted">{formatTime(timestamp)}</span>}
-            {showTick && (
-              <svg width="14" height="10" viewBox="0 0 16 11" className="text-wa-muted" fill="none">
-                <path
-                  d="M1 5.5L5 9.5L11.5 1.5M5.5 9.5L15 1"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            )}
-          </div>
-          
-          {/* Reaction Badge */}
-          {totalReactions > 0 && (
-            <div 
-              onClick={(e) => {
-                if (variant === 'channel' && id && onReact) {
-                  e.stopPropagation()
-                  setShowPicker(true)
-                }
-              }}
-              className={`absolute -bottom-3 ${rtl ? 'left-2' : 'right-2'} z-10 flex cursor-pointer items-center gap-0.5 rounded-full border-[1.5px] border-white bg-white/95 px-1.5 py-[2px] shadow-sm backdrop-blur-sm ${hasMyReaction ? 'bg-blue-50/95 border-blue-200' : ''}`}
-            >
-              <div className="flex -space-x-1">
-                {topEmojis.map((emoji, i) => (
-                  <span key={i} className="text-[11px] leading-none z-10">{emoji}</span>
-                ))}
+
+          <div className={`mt-1 flex items-end justify-between gap-3`}>
+            {/* Reaction Badge (Inline) */}
+            {totalReactions > 0 ? (
+              <div 
+                onClick={(e) => {
+                  if (variant === 'channel' && id && onReact) {
+                    e.stopPropagation()
+                    setShowPicker(true)
+                  }
+                }}
+                className={`flex cursor-pointer items-center gap-1 rounded-full border-[1px] border-black/5 bg-white/60 px-1.5 py-[2px] shadow-sm ${hasMyReaction ? 'bg-blue-50/80 border-blue-200' : ''}`}
+              >
+                <div className="flex gap-1.5">
+                  {topEmojis.map((emoji, i) => (
+                    <span key={i} className="text-[12px] leading-none">{emoji}</span>
+                  ))}
+                </div>
+                {totalReactions > 1 && (
+                  <span className="text-[11px] font-medium text-wa-muted">{totalReactions}</span>
+                )}
               </div>
-              {totalReactions > 1 && (
-                <span className="pl-1 text-[10px] font-medium text-wa-muted">{totalReactions}</span>
+            ) : (
+              <div /> /* Empty div to push timestamp to the right if justify-between is used */
+            )}
+
+            {/* Timestamp */}
+            <div className={`flex items-center gap-1 flex-none ${rtl ? 'order-first' : ''}`}>
+              {variant === 'reader-pending' && (
+                <span className="text-[11px] italic text-wa-muted">Sent · awaiting reply</span>
+              )}
+              {timestamp && <span className="text-[10px] text-wa-muted">{formatTime(timestamp)}</span>}
+              {showTick && (
+                <svg width="14" height="10" viewBox="0 0 16 11" className="text-wa-muted" fill="none">
+                  <path
+                    d="M1 5.5L5 9.5L11.5 1.5M5.5 9.5L15 1"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
