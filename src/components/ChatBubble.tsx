@@ -71,6 +71,9 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
     if (variant !== 'channel' || !id || !onReact) return
     // Only primary clicks/touches
     if (e.button !== 0 && e.pointerType === 'mouse') return
+
+    // Don't start gesture detection if interacting with expand/collapse buttons
+    if ((e.target as HTMLElement).closest('[data-expand-toggle]')) return
     
     const now = Date.now()
     if (now - lastTapRef.current < 300) {
@@ -95,6 +98,8 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
 
   const handleContextMenu = (e: React.MouseEvent) => {
     if (variant === 'channel' && id && onReact) {
+      // Don't hijack context menu on expand/collapse buttons
+      if ((e.target as HTMLElement).closest('[data-expand-toggle]')) return
       e.preventDefault()
       checkPositionAndShow()
     }
@@ -187,15 +192,14 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
             {shouldTruncate && (
               <button 
                 type="button"
+                data-expand-toggle="true"
                 onClick={(e) => { 
                   e.preventDefault();
                   e.stopPropagation(); 
+                  console.log('[ChatBubble] Read more clicked, setting isExpanded=true');
                   setIsExpanded(true);
                 }}
                 onPointerDown={(e) => e.stopPropagation()}
-                onPointerUp={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                onMouseUp={(e) => e.stopPropagation()}
                 className="text-wa-teal font-medium cursor-pointer select-none mx-1 inline-block bg-transparent border-none p-0"
                 style={{ touchAction: 'manipulation' }}
               >
@@ -206,15 +210,14 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
           {isLong && isExpanded && (
             <button 
               type="button"
+              data-expand-toggle="true"
               onClick={(e) => { 
                 e.preventDefault();
                 e.stopPropagation(); 
+                console.log('[ChatBubble] Show less clicked, setting isExpanded=false');
                 setIsExpanded(false);
               }}
               onPointerDown={(e) => e.stopPropagation()}
-              onPointerUp={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              onMouseUp={(e) => e.stopPropagation()}
               className={`text-wa-teal text-[0.9rem] font-medium cursor-pointer select-none mt-1 block w-full bg-transparent border-none p-0 ${rtl ? 'text-right' : 'text-left'}`}
               style={{ touchAction: 'manipulation' }}
             >
