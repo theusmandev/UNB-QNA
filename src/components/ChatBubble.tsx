@@ -1,15 +1,20 @@
+import { useState, useRef, useEffect } from 'react'
 import { isUrdu } from '../lib/isUrdu'
 import { linkify } from '../lib/linkify'
 
 type Variant = 'reader' | 'reader-pending' | 'channel'
 
 interface ChatBubbleProps {
+  id?: string
   text: string
   variant: Variant
   /** Shown above the bubble text — e.g. the channel name on admin replies. */
   label?: string
   timestamp?: string
   showTick?: boolean
+  reactions?: Record<string, number>
+  myReactions?: string[]
+  onReact?: (id: string, reaction: string) => void
 }
 
 function formatTime(iso?: string) {
@@ -21,51 +26,162 @@ function formatTime(iso?: string) {
   }
 }
 
-export default function ChatBubble({ text, variant, label, timestamp, showTick }: ChatBubbleProps) {
+const EMOJIS = ['👍', '❤️', '😂', '😮', '🙏']
+
+export default function ChatBubble({ id, text, variant, label, timestamp, showTick, reactions, myReactions = [], onReact }: ChatBubbleProps) {
   const rtl = isUrdu(text)
   const isOutgoingSide = variant === 'channel'
 
   const bubbleColor =
     variant === 'channel' ? 'bg-wa-outgoing' : variant === 'reader-pending' ? 'bg-white/70' : 'bg-wa-incoming'
 
+  // Long-press state
+  const [showPicker, setShowPicker] = useState(false)
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (pressTimer.current) clearTimeout(pressTimer.current)
+    }
+  }, [])
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (variant !== 'channel' || !id || !onReact) return
+    // Only primary clicks/touches
+    if (e.button !== 0 && e.pointerType === 'mouse') return
+    
+    pressTimer.current = setTimeout(() => {
+      setShowPicker(true)
+    }, 500)
+  }
+
+  const cancelPress = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current)
+      pressTimer.current = null
+    }
+  }
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (variant === 'channel' && id && onReact) {
+      e.preventDefault()
+      setShowPicker(true)
+    }
+  }
+
+  // Calculate total reactions and top emojis
+  const totalReactions = reactions ? Object.values(reactions).reduce((a, b) => a + b, 0) : 0
+  const topEmojis = reactions 
+    ? Object.entries(reactions)
+        .filter(([_, count]) => count > 0)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([emoji]) => emoji)
+    : []
+  
+  const hasMyReaction = myReactions.length > 0
+
   return (
-    <div className={`flex w-full ${isOutgoingSide ? 'justify-end' : 'justify-start'} px-3 py-1`}>
-      <div
-        className={[
-          'relative max-w-[82%] sm:max-w-[70%] rounded-lg px-3 py-2 shadow-bubble',
-          bubbleColor,
-          isOutgoingSide ? 'bubble-tail-out' : 'bubble-tail-in',
-          variant === 'reader-pending' ? 'border border-dashed border-wa-muted/40' : '',
-        ].join(' ')}
-      >
-        {label && <p className="text-xs font-semibold text-wa-teal mb-0.5">{label}</p>}
-        <p
-          dir={rtl ? 'rtl' : 'ltr'}
+    <>
+      <div className={`flex w-full ${isOutgoingSide ? 'justify-end' : 'justify-start'} px-3 py-1 relative`}>
+        <div
+          onPointerDown={handlePointerDown}
+          onPointerUp={cancelPress}
+          onPointerMove={cancelPress}
+          onPointerCancel={cancelPress}
+          onContextMenu={handleContextMenu}
           className={[
-            'whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed text-wa-ink',
-            rtl ? 'urdu-text text-right' : 'text-left',
+            'relative max-w-[82%] sm:max-w-[70%] rounded-lg px-3 py-2 shadow-bubble transition-transform active:scale-[0.98]',
+            bubbleColor,
+            isOutgoingSide ? 'bubble-tail-out' : 'bubble-tail-in',
+            variant === 'reader-pending' ? 'border border-dashed border-wa-muted/40' : '',
+            // add some bottom margin if there are reactions so the pill doesn't overlap the next message
+            totalReactions > 0 ? 'mb-2' : ''
           ].join(' ')}
         >
-          {variant === 'channel' ? linkify(text) : text}
-        </p>
-        <div className={`mt-1 flex items-center gap-1 ${rtl ? 'justify-start' : 'justify-end'}`}>
-          {variant === 'reader-pending' && (
-            <span className="text-[11px] italic text-wa-muted">Sent · awaiting reply</span>
+          {showPicker && (
+            <div 
+              className={`absolute -top-10 z-50 flex items-center gap-1 rounded-full bg-white px-2 py-1.5 shadow-lg border border-black/5 ${isOutgoingSide ? 'right-0' : 'left-0'}`}
+              onPointerDown={(e) => e.stopPropagation()} // Prevent bubble press
+            >
+              {EMOJIS.map(emoji => (
+                <button
+                  key={emoji}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowPicker(false)
+                    if (id && onReact) onReact(id, emoji)
+                  }}
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xl hover:bg-gray-100 active:bg-gray-200 transition-colors ${myReactions.includes(emoji) ? 'bg-wa-teal/10' : ''}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
           )}
-          {timestamp && <span className="text-[10px] text-wa-muted">{formatTime(timestamp)}</span>}
-          {showTick && (
-            <svg width="14" height="10" viewBox="0 0 16 11" className="text-wa-muted" fill="none">
-              <path
-                d="M1 5.5L5 9.5L11.5 1.5M5.5 9.5L15 1"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+
+          {label && <p className="text-xs font-semibold text-wa-teal mb-0.5">{label}</p>}
+          <p
+            dir={rtl ? 'rtl' : 'ltr'}
+            className={[
+              'whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed text-wa-ink',
+              rtl ? 'urdu-text text-right' : 'text-left',
+            ].join(' ')}
+          >
+            {variant === 'channel' ? linkify(text) : text}
+          </p>
+          <div className={`mt-1 flex items-center gap-1 ${rtl ? 'justify-start' : 'justify-end'}`}>
+            {variant === 'reader-pending' && (
+              <span className="text-[11px] italic text-wa-muted">Sent · awaiting reply</span>
+            )}
+            {timestamp && <span className="text-[10px] text-wa-muted">{formatTime(timestamp)}</span>}
+            {showTick && (
+              <svg width="14" height="10" viewBox="0 0 16 11" className="text-wa-muted" fill="none">
+                <path
+                  d="M1 5.5L5 9.5L11.5 1.5M5.5 9.5L15 1"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </div>
+          
+          {/* Reaction Badge */}
+          {totalReactions > 0 && (
+            <div 
+              onClick={(e) => {
+                // Clicking the badge can optionally open the picker too
+                if (variant === 'channel' && id && onReact) {
+                  e.stopPropagation()
+                  setShowPicker(true)
+                }
+              }}
+              className={`absolute -bottom-3 ${isOutgoingSide ? 'left-2' : 'right-2'} z-10 flex cursor-pointer items-center gap-0.5 rounded-full border-[1.5px] border-[#E4DCCD] bg-white px-1.5 py-[2px] shadow-sm ${hasMyReaction ? 'bg-blue-50/50 border-blue-200' : ''}`}
+            >
+              <div className="flex -space-x-1">
+                {topEmojis.map((emoji, i) => (
+                  <span key={i} className="text-[11px] leading-none z-10">{emoji}</span>
+                ))}
+              </div>
+              {totalReactions > 1 && (
+                <span className="pl-1 text-[10px] font-medium text-wa-muted">{totalReactions}</span>
+              )}
+            </div>
           )}
         </div>
       </div>
-    </div>
+
+      {/* Full screen overlay to dismiss picker */}
+      {showPicker && (
+        <div 
+          className="fixed inset-0 z-40 bg-transparent" 
+          onPointerDown={() => setShowPicker(false)}
+          onContextMenu={(e) => { e.preventDefault(); setShowPicker(false) }}
+        />
+      )}
+    </>
   )
 }

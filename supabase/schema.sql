@@ -449,3 +449,91 @@ create policy "admin can update site settings" on public.site_settings for updat
 
 -- Add to realtime
 alter publication supabase_realtime add table public.site_settings;
+-- ============================================================================
+-- PHASE 2: RESPONSE REACTIONS
+-- ============================================================================
+
+create table if not exists public.response_reactions (
+  id          uuid primary key default gen_random_uuid(),
+  response_id uuid not null references public.responses(id) on delete cascade,
+  visitor_id  uuid not null,
+  reaction    text not null,
+  created_at  timestamptz not null default now(),
+  unique (response_id, visitor_id, reaction)
+);
+
+create index if not exists response_reactions_response_id_idx on public.response_reactions(response_id);
+
+alter table public.response_reactions enable row level security;
+
+drop policy if exists "admin can view all response reactions" on public.response_reactions;
+create policy "admin can view all response reactions" on public.response_reactions for select to authenticated using (true);
+
+drop function if exists public.toggle_response_reaction(uuid, uuid, text);
+create function public.toggle_response_reaction(p_response_id uuid, p_visitor_id uuid, p_reaction text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $body
+declare
+  existing_id uuid;
+begin
+  select id into existing_id 
+  from public.response_reactions
+  where response_id = p_response_id and visitor_id = p_visitor_id and reaction = p_reaction;
+
+  if existing_id is not null then
+    delete from public.response_reactions where id = existing_id;
+  else
+    insert into public.response_reactions (response_id, visitor_id, reaction)
+    values (p_response_id, p_visitor_id, p_reaction);
+  end if;
+end;
+$body;
+grant execute on function public.toggle_response_reaction(uuid, uuid, text) to anon, authenticated;
+
+drop function if exists public.get_public_feed(text);
+create or replace function public.get_public_feed(p_slug text)
+returns table (
+  id          uuid,
+  message     text,
+  reply_text  text,
+  replied_at  timestamptz,
+  reader_name text,
+  reactions   jsonb
+)
+language sql
+security definer
+set search_path = public
+stable
+as $body
+  select 
+    r.id,
+    r.message, 
+    r.reply_text, 
+    r.replied_at, 
+    r.reader_name,
+    coalesce(
+      (
+        select jsonb_object_agg(rr.reaction, rr.count)
+        from (
+          select reaction, count(*)::int
+          from public.response_reactions
+          where response_id = r.id
+          group by reaction
+        ) rr
+      ), 
+      '{}'::jsonb
+    ) as reactions
+  from public.responses r
+  join public.questions q on q.id = r.question_id
+  where q.slug = p_slug
+    and r.reply_text is not null
+  order by r.replied_at asc;
+$body;
+
+grant execute on function public.get_public_feed(text) to anon, authenticated;
+
+-- Add new table to Realtime
+alter publication supabase_realtime add table public.response_reactions;

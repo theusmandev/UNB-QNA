@@ -16,6 +16,7 @@ export default function PublicResponsePage() {
 
   const [question, setQuestion] = useState<Question | null | undefined>(undefined) // undefined = loading
   const [feed, setFeed] = useState<PublicFeedItem[]>([])
+  const [myReactions, setMyReactions] = useState<Record<string, string[]>>({})
   const [count, setCount] = useState<number | null>(null)
   const [showIdentityModal, setShowIdentityModal] = useState(false)
   const [pendingMessage, setPendingMessage] = useState<string | null>(null)
@@ -60,6 +61,12 @@ export default function PublicResponsePage() {
     setFeed(loadedFeed)
     if (typeof countData === 'number') setCount(countData)
 
+    if (identity?.email) {
+      // Need visitor ID which is hash of email/userAgent
+      // The easiest way is to use identity but we don't have visitorId directly here without calling the hook with 'public'
+      // Wait, useLocalIdentity returns visitorId as well!
+    }
+
     try {
       const viewed = JSON.parse(localStorage.getItem('unb_viewed_counts') || '{}')
       viewed[slug] = loadedFeed.length
@@ -69,11 +76,46 @@ export default function PublicResponsePage() {
     }
   }, [slug])
 
+  // We need visitorId to load reactions.
+  const { visitorId } = useLocalIdentity(slug)
+
+  const loadReactions = useCallback(async () => {
+    if (!visitorId || feed.length === 0) return
+    const responseIds = feed.map(f => f.id).filter(Boolean)
+    if (responseIds.length === 0) return
+
+    const { data: myReacts } = await supabase
+      .from('response_reactions')
+      .select('response_id, reaction')
+      .eq('visitor_id', visitorId)
+      .in('response_id', responseIds)
+    
+    const reactMap: Record<string, string[]> = {}
+    myReacts?.forEach((r) => {
+      if (!reactMap[r.response_id]) reactMap[r.response_id] = []
+      reactMap[r.response_id].push(r.reaction)
+    })
+    setMyReactions(reactMap)
+  }, [visitorId, feed])
+
+  useEffect(() => {
+    loadReactions()
+  }, [loadReactions])
+
   useEffect(() => {
     load()
     const interval = setInterval(load, 10000)
-    return () => clearInterval(interval)
-  }, [load])
+    
+    const channel = supabase
+      .channel(`public-feed-${slug}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'response_reactions' }, load)
+      .subscribe()
+
+    return () => {
+      clearInterval(interval)
+      supabase.removeChannel(channel)
+    }
+  }, [load, slug])
 
   useEffect(() => {
     const newItems =
@@ -94,6 +136,46 @@ export default function PublicResponsePage() {
       setUnreadCount((c) => c + newItems)
     }
   }, [feed.length, pending.length])
+
+  async function handleReact(responseId: string, reaction: string) {
+    if (!visitorId) return
+
+    const hasReacted = myReactions[responseId]?.includes(reaction)
+    
+    // Optimistic UI
+    setMyReactions((prev) => {
+      const next = { ...prev }
+      if (!next[responseId]) next[responseId] = []
+      if (hasReacted) {
+        next[responseId] = next[responseId].filter(r => r !== reaction)
+      } else {
+        next[responseId] = [...next[responseId], reaction]
+      }
+      return next
+    })
+
+    setFeed((prev) => 
+      prev.map(f => {
+        if (f.id === responseId) {
+          const nextReactions = { ...(f.reactions || {}) }
+          const currentCount = nextReactions[reaction] || 0
+          if (hasReacted) {
+            nextReactions[reaction] = Math.max(0, currentCount - 1)
+          } else {
+            nextReactions[reaction] = currentCount + 1
+          }
+          return { ...f, reactions: nextReactions }
+        }
+        return f
+      })
+    )
+
+    await supabase.rpc('toggle_response_reaction', {
+      p_response_id: responseId,
+      p_visitor_id: visitorId,
+      p_reaction: reaction
+    })
+  }
 
   async function submitResponse(message: string, id: VisitorIdentity) {
     if (!question) return
@@ -192,10 +274,14 @@ export default function PublicResponsePage() {
             <div key={i}>
               <ChatBubble variant="reader" text={item.message} label={item.reader_name || 'Anonymous'} />
               <ChatBubble
+                id={item.id}
                 variant="channel"
                 text={item.reply_text}
                 label="Urdu Novel Bank"
                 timestamp={item.replied_at}
+                reactions={item.reactions}
+                myReactions={item.id ? myReactions[item.id] : []}
+                onReact={handleReact}
               />
             </div>
           ))}

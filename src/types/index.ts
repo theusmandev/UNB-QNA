@@ -25,10 +25,12 @@ export interface ResponseRow {
 
 /** Safe public shape returned by the get_public_feed RPC — no name/email, ever. */
 export interface PublicFeedItem {
+  id: string
   message: string
   reply_text: string
   replied_at: string
   reader_name: string | null
+  reactions?: Record<string, number>
 }
 
 /** Locally-known identity for this visitor's device, stored in localStorage. */
