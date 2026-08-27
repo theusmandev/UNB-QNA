@@ -113,12 +113,11 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
               : {}
           }
           className={[
-            'relative max-w-[82%] sm:max-w-[70%] rounded-lg px-3 py-2 shadow-bubble transition-transform active:scale-[0.98]',
+            'relative max-w-[82%] sm:max-w-[70%] rounded-lg px-3 pt-2 shadow-bubble transition-transform active:scale-[0.98]',
             bubbleColor,
             isOutgoingSide ? 'bubble-tail-out' : 'bubble-tail-in',
             variant === 'reader-pending' ? 'border border-dashed border-wa-muted/40' : '',
-            // add some bottom margin if there are reactions so the pill doesn't overlap the next message
-            totalReactions > 0 ? 'mb-2' : ''
+            totalReactions > 0 ? 'pb-4 mb-3' : 'pb-2'
           ].join(' ')}
         >
           {showPicker && (
@@ -175,13 +174,12 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
           {totalReactions > 0 && (
             <div 
               onClick={(e) => {
-                // Clicking the badge can optionally open the picker too
                 if (variant === 'channel' && id && onReact) {
                   e.stopPropagation()
                   setShowPicker(true)
                 }
               }}
-              className={`absolute -bottom-3 ${isOutgoingSide ? 'left-2' : 'right-2'} z-10 flex cursor-pointer items-center gap-0.5 rounded-full border-[1.5px] border-[#E4DCCD] bg-white px-1.5 py-[2px] shadow-sm ${hasMyReaction ? 'bg-blue-50/50 border-blue-200' : ''}`}
+              className={`absolute -bottom-3 ${rtl ? 'left-2' : 'right-2'} z-10 flex cursor-pointer items-center gap-0.5 rounded-full border-[1.5px] border-white bg-white/95 px-1.5 py-[2px] shadow-sm backdrop-blur-sm ${hasMyReaction ? 'bg-blue-50/95 border-blue-200' : ''}`}
             >
               <div className="flex -space-x-1">
                 {topEmojis.map((emoji, i) => (
