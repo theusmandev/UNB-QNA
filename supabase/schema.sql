@@ -568,40 +568,84 @@ GRANT EXECUTE ON FUNCTION public.get_reader_stats_for_question(uuid) TO authenti
 -- ADMIN: OVERVIEW STATS
 -- ============================================================================
 -- Returns a single JSON object with high-level stats and leaderboard for the 
--- admin dashboard overview tab.
+-- admin dashboard overview tab, parameterized for filtering.
+
+CREATE INDEX IF NOT EXISTS questions_created_at_idx ON public.questions(created_at desc);
 
 DROP FUNCTION IF EXISTS public.get_admin_overview_stats();
-CREATE OR REPLACE FUNCTION public.get_admin_overview_stats()
+CREATE OR REPLACE FUNCTION public.get_admin_overview_stats(
+  p_time_global text,
+  p_time_leaderboard text,
+  p_question_status text,
+  p_reader_type text
+)
 RETURNS json
 LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public
 STABLE
 AS $$
-  WITH question_stats AS (
+  WITH time_bounds AS (
+    SELECT 
+      CASE 
+        WHEN p_time_global = 'today' THEN date_trunc('day', now())
+        WHEN p_time_global = 'last_7_days' THEN now() - interval '7 days'
+        WHEN p_time_global = 'last_30_days' THEN now() - interval '30 days'
+        ELSE '1970-01-01'::timestamptz 
+      END as global_start,
+      CASE 
+        WHEN p_time_leaderboard = 'this_week' THEN date_trunc('week', now())
+        WHEN p_time_leaderboard = 'this_month' THEN date_trunc('month', now())
+        ELSE '1970-01-01'::timestamptz 
+      END as leaderboard_start
+  ),
+  filtered_questions AS (
+    SELECT id, is_active
+    FROM public.questions q, time_bounds tb
+    WHERE q.created_at >= tb.global_start
+      AND (p_question_status = 'all' 
+           OR (p_question_status = 'active' AND q.is_active = true)
+           OR (p_question_status = 'inactive' AND q.is_active = false))
+  ),
+  question_stats AS (
     SELECT 
       COUNT(*) AS total_questions,
       COUNT(*) FILTER (WHERE is_active = true) AS active_questions
-    FROM public.questions
+    FROM filtered_questions
+  ),
+  filtered_responses AS (
+    SELECT r.reader_email, r.reply_text
+    FROM public.responses r
+    JOIN public.questions q ON q.id = r.question_id,
+    time_bounds tb
+    WHERE r.created_at >= tb.global_start
+      AND (p_question_status = 'all' 
+           OR (p_question_status = 'active' AND q.is_active = true)
+           OR (p_question_status = 'inactive' AND q.is_active = false))
   ),
   response_stats AS (
     SELECT
       COUNT(DISTINCT reader_email) AS unique_readers,
       COUNT(*) FILTER (WHERE reply_text IS NOT NULL) AS published_replies,
       COUNT(*) FILTER (WHERE reply_text IS NULL) AS pending_replies
-    FROM public.responses
+    FROM filtered_responses
   ),
   update_stats AS (
     SELECT COUNT(*) AS total_updates
-    FROM public.updates
+    FROM public.updates, time_bounds tb
+    WHERE created_at >= tb.global_start
   ),
   loyal_readers AS (
     SELECT 
-      reader_name,
+      (array_agg(reader_name ORDER BY created_at ASC) FILTER (WHERE reader_name IS NOT NULL))[1] AS reader_name,
       reader_email,
       COUNT(*) AS response_count
-    FROM public.responses
-    GROUP BY reader_email, reader_name
+    FROM public.responses, time_bounds tb
+    WHERE created_at >= tb.leaderboard_start
+    GROUP BY reader_email
+    HAVING (p_reader_type = 'all'
+            OR (p_reader_type = 'named' AND (array_agg(reader_name ORDER BY created_at ASC) FILTER (WHERE reader_name IS NOT NULL))[1] IS NOT NULL)
+            OR (p_reader_type = 'anonymous' AND (array_agg(reader_name ORDER BY created_at ASC) FILTER (WHERE reader_name IS NOT NULL))[1] IS NULL))
     ORDER BY response_count DESC
     LIMIT 20
   )
@@ -616,4 +660,4 @@ AS $$
   );
 $$;
 
-GRANT EXECUTE ON FUNCTION public.get_admin_overview_stats() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_admin_overview_stats(text, text, text, text) TO authenticated;
