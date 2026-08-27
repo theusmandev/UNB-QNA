@@ -161,11 +161,37 @@ export default function AdminUpdatesTab() {
     }
   }), [])
 
-  async function load() {
-    setLoading(true)
-    const { data } = await supabase.rpc('get_updates_with_reactions')
-    setUpdates((data as Update[]) ?? [])
-    setLoading(false)
+  const [offset, setOffset] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const limit = 20
+
+  async function load(currentOffset = 0, isLoadMore = false, customLimit?: number) {
+    if (!isLoadMore) setLoading(true)
+    else setLoadingMore(true)
+    
+    const fetchLimit = customLimit ?? limit
+
+    const { data } = await supabase.rpc('get_updates_with_reactions', {
+      p_limit: fetchLimit,
+      p_offset: currentOffset,
+    })
+    
+    const list = (data as Update[]) ?? []
+    
+    if (isLoadMore) {
+      setUpdates(prev => {
+        const existingIds = new Set(prev.map(p => p.id))
+        const newItems = list.filter(n => !existingIds.has(n.id))
+        return [...prev, ...newItems]
+      })
+    } else {
+      setUpdates(list)
+    }
+    
+    setHasMore(list.length === fetchLimit)
+    if (!isLoadMore) setLoading(false)
+    else setLoadingMore(false)
   }
 
   useEffect(() => {
@@ -173,14 +199,30 @@ export default function AdminUpdatesTab() {
 
     const channel = supabase
       .channel('admin-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'updates' }, load)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'update_reactions' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'updates' }, () => {
+        setOffset(prev => {
+          load(0, false, prev + limit)
+          return prev
+        })
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'update_reactions' }, () => {
+        setOffset(prev => {
+          load(0, false, prev + limit)
+          return prev
+        })
+      })
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
   }, [])
+
+  function loadMore() {
+    const nextOffset = offset + limit
+    setOffset(nextOffset)
+    load(nextOffset, true)
+  }
 
   async function handleCreate() {
     const title = newTitle.trim()
@@ -442,6 +484,17 @@ export default function AdminUpdatesTab() {
             )
           })}
         </ul>
+        {hasMore && updates.length > 0 && (
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="rounded-full border border-black/10 bg-white px-5 py-2 text-sm font-semibold text-wa-ink shadow-sm hover:bg-gray-50 disabled:opacity-50"
+            >
+              {loadingMore ? 'Loading…' : 'Load more'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

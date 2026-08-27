@@ -12,10 +12,22 @@ export default function AdminResponsesTab({
 }) {
   const [questions, setQuestions] = useState<Question[]>([])
   const filter = selectedQuestionId
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'answered' | 'all'>('pending')
   const [responses, setResponses] = useState<ResponseRow[]>([])
   const [loading, setLoading] = useState(true)
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({})
   const [publishing, setPublishing] = useState<string | null>(null)
+
+  const [offset, setOffset] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const limit = 20
+
+  useEffect(() => {
+    supabase.from('questions').select('*').order('created_at', { ascending: false }).then(({ data }) => {
+      setQuestions(data ?? [])
+    })
+  }, [])
 
   useEffect(() => {
     if (filter !== 'all') {
@@ -27,32 +39,72 @@ export default function AdminResponsesTab({
     }
   }, [filter])
 
-  async function load() {
-    setLoading(true)
-    const [{ data: qs }, { data: rs }] = await Promise.all([
-      supabase.from('questions').select('*').order('created_at', { ascending: false }),
-      supabase.from('responses').select('*').order('created_at', { ascending: false }),
-    ])
-    setQuestions((qs as Question[]) ?? [])
-    setResponses((rs as ResponseRow[]) ?? [])
-    setLoading(false)
+  async function loadResponses(currentOffset = 0, isLoadMore = false, customLimit?: number) {
+    if (!isLoadMore) setLoading(true)
+    else setLoadingMore(true)
+    
+    const fetchLimit = customLimit ?? limit
+
+    let query = supabase
+      .from('responses')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(currentOffset, currentOffset + fetchLimit - 1)
+
+    if (filter !== 'all') {
+      query = query.eq('question_id', filter)
+    }
+
+    if (statusFilter === 'pending') {
+      query = query.is('reply_text', null)
+    } else if (statusFilter === 'answered') {
+      query = query.not('reply_text', 'is', null)
+    }
+
+    const { data: rs } = await query
+    const list = (rs as ResponseRow[]) ?? []
+
+    if (isLoadMore) {
+      setResponses(prev => {
+        const existing = new Set(prev.map(p => p.id))
+        const newItems = list.filter(n => !existing.has(n.id))
+        return [...prev, ...newItems]
+      })
+    } else {
+      setResponses(list)
+    }
+
+    setHasMore(list.length === fetchLimit)
+    if (!isLoadMore) setLoading(false)
+    else setLoadingMore(false)
   }
 
   useEffect(() => {
-    load()
+    setOffset(0)
+    loadResponses(0, false)
+  }, [filter, statusFilter])
 
+  useEffect(() => {
     const channel = supabase
-      .channel('admin-responses')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'questions' }, load)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'responses' }, load)
+      .channel(`admin-responses-${filter}-${statusFilter}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'responses' }, () => {
+        setOffset(prev => {
+          loadResponses(0, false, prev + limit)
+          return prev
+        })
+      })
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [filter, statusFilter])
 
-  const visible = filter === 'all' ? responses : responses.filter((r) => r.question_id === filter)
+  function loadMore() {
+    const nextOffset = offset + limit
+    setOffset(nextOffset)
+    loadResponses(nextOffset, true)
+  }
 
   async function publish(response: ResponseRow) {
     const reply = (replyDrafts[response.id] || '').trim()
@@ -65,33 +117,47 @@ export default function AdminResponsesTab({
       .is('reply_text', null) // belt-and-braces: only ever reply once, matching the RLS policy
     setPublishing(null)
     if (!error) {
-      load()
+      loadResponses(0, false, offset + limit)
     }
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <label className="text-xs font-medium text-wa-muted">Question</label>
-        <select
-          value={filter}
-          onChange={(e) => onSelectQuestion?.(e.target.value)}
-          className="rounded-lg border border-black/10 px-2.5 py-1.5 text-sm outline-none"
-        >
-          <option value="all">All questions</option>
-          {questions.map((q) => (
-            <option key={q.id} value={q.id}>
-              {q.question_text.slice(0, 40)}
-            </option>
-          ))}
-        </select>
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-medium text-wa-muted">Question</label>
+          <select
+            value={filter}
+            onChange={(e) => onSelectQuestion?.(e.target.value)}
+            className="rounded-lg border border-black/10 px-2.5 py-1.5 text-sm outline-none bg-white"
+          >
+            <option value="all">All questions</option>
+            {questions.map((q) => (
+              <option key={q.id} value={q.id}>
+                {q.question_text.slice(0, 40)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-medium text-wa-muted">Status</label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="rounded-lg border border-black/10 px-2.5 py-1.5 text-sm outline-none bg-white"
+          >
+            <option value="pending">Pending</option>
+            <option value="answered">Answered</option>
+            <option value="all">All</option>
+          </select>
+        </div>
       </div>
 
       {loading && <p className="text-sm text-wa-muted">Loading…</p>}
-      {!loading && visible.length === 0 && <p className="text-sm text-wa-muted">No responses here yet.</p>}
+      {!loading && responses.length === 0 && <p className="text-sm text-wa-muted">No responses here yet.</p>}
 
       <ul className="space-y-3">
-        {visible.map((r) => (
+        {responses.map((r) => (
           <li key={r.id} className="rounded-xl bg-white p-4 shadow-sm">
             <div className="flex flex-wrap items-baseline justify-between gap-1">
               <p className="text-sm font-medium text-wa-ink">{r.reader_name || 'Anonymous Reader'}</p>
@@ -129,6 +195,17 @@ export default function AdminResponsesTab({
           </li>
         ))}
       </ul>
+      {hasMore && responses.length > 0 && (
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="rounded-full border border-black/10 bg-white px-5 py-2 text-sm font-semibold text-wa-ink shadow-sm hover:bg-gray-50 disabled:opacity-50"
+          >
+            {loadingMore ? 'Loading…' : 'Load more'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
