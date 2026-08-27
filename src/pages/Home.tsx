@@ -16,8 +16,20 @@ declare global {
 }
 
 export default function Home() {
-  const [questions, setQuestions] = useState<ActiveQuestionWithCount[]>([])
-  const [loading, setLoading] = useState(true)
+  const [questions, setQuestions] = useState<ActiveQuestionWithCount[]>(() => {
+    try {
+      const cached = localStorage.getItem('unb_cached_chats')
+      if (cached) return JSON.parse(cached)
+    } catch {}
+    return []
+  })
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !localStorage.getItem('unb_cached_chats')
+    } catch {
+      return true
+    }
+  })
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [activeTab, setActiveTab] = useState<'chats' | 'updates'>('chats')
@@ -73,19 +85,22 @@ export default function Home() {
 
   useEffect(() => {
     async function loadInitial() {
-      setLoading(true)
       const { data } = await supabase.rpc('get_active_questions_with_counts', {
         p_limit: 21,
         p_offset: 0
       })
       const items = (data as ActiveQuestionWithCount[]) ?? []
+      let newQuestions = []
       if (items.length > 20) {
         setHasMore(true)
-        setQuestions(items.slice(0, 20))
+        newQuestions = items.slice(0, 20)
       } else {
         setHasMore(false)
-        setQuestions(items)
+        newQuestions = items
       }
+      
+      setQuestions(newQuestions)
+      try { localStorage.setItem('unb_cached_chats', JSON.stringify(newQuestions)) } catch {}
       setLoading(false)
     }
     loadInitial()

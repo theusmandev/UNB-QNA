@@ -20,12 +20,30 @@ interface UpdatesTabProps {
 }
 
 export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
-  const [updates, setUpdates] = useState<Update[]>([])
-  const [loading, setLoading] = useState(true)
+  const [updates, setUpdates] = useState<Update[]>(() => {
+    try {
+      const cached = localStorage.getItem('unb_cached_updates')
+      if (cached) return JSON.parse(cached)
+    } catch {}
+    return []
+  })
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !localStorage.getItem('unb_cached_updates')
+    } catch {
+      return true
+    }
+  })
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [loadedCount, setLoadedCount] = useState(20)
-  const [myReactions, setMyReactions] = useState<Record<string, string[]>>({})
+  const [myReactions, setMyReactions] = useState<Record<string, string[]>>(() => {
+    try {
+      const cached = localStorage.getItem('unb_cached_reactions')
+      if (cached) return JSON.parse(cached)
+    } catch {}
+    return {}
+  })
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
   const loadedCountRef = useRef(loadedCount)
@@ -50,13 +68,16 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
     })
     const items = (data as Update[]) ?? []
     
+    let fetchedUpdates = []
     if (items.length > limitToFetch) {
       setHasMore(true)
-      setUpdates(items.slice(0, limitToFetch))
+      fetchedUpdates = items.slice(0, limitToFetch)
     } else {
       setHasMore(false)
-      setUpdates(items)
+      fetchedUpdates = items
     }
+    setUpdates(fetchedUpdates)
+    try { localStorage.setItem('unb_cached_updates', JSON.stringify(fetchedUpdates.slice(0, 20))) } catch {}
     
     // Also load the current visitor's reactions so we can highlight what they clicked
     if (visitorId) {
@@ -71,6 +92,7 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
         reactMap[r.update_id].push(r.reaction)
       })
       setMyReactions(reactMap)
+      try { localStorage.setItem('unb_cached_reactions', JSON.stringify(reactMap)) } catch {}
     }
 
     setLoading(false)
