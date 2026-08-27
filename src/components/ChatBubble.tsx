@@ -35,9 +35,10 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
   const bubbleColor =
     variant === 'channel' ? 'bg-wa-outgoing' : variant === 'reader-pending' ? 'bg-white/70' : 'bg-wa-incoming'
 
-  // Long-press state
+  // Long-press and double-tap state
   const [showPicker, setShowPicker] = useState(false)
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastTapRef = useRef<number>(0)
   
   // Cleanup timer on unmount
   useEffect(() => {
@@ -50,6 +51,15 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
     if (variant !== 'channel' || !id || !onReact) return
     // Only primary clicks/touches
     if (e.button !== 0 && e.pointerType === 'mouse') return
+    
+    const now = Date.now()
+    if (now - lastTapRef.current < 300) {
+      // Double tap detected
+      setShowPicker(true)
+      if (pressTimer.current) clearTimeout(pressTimer.current)
+      return
+    }
+    lastTapRef.current = now
     
     pressTimer.current = setTimeout(() => {
       setShowPicker(true)
@@ -91,6 +101,17 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
           onPointerMove={cancelPress}
           onPointerCancel={cancelPress}
           onContextMenu={handleContextMenu}
+          style={
+            variant === 'channel'
+              ? {
+                  WebkitUserSelect: 'none',
+                  MozUserSelect: 'none',
+                  msUserSelect: 'none', // TypeScript might complain about msUserSelect without casting, but React accepts it. Actually let's use standard React camelCase.
+                  userSelect: 'none',
+                  WebkitTouchCallout: 'none',
+                } as React.CSSProperties
+              : {}
+          }
           className={[
             'relative max-w-[82%] sm:max-w-[70%] rounded-lg px-3 py-2 shadow-bubble transition-transform active:scale-[0.98]',
             bubbleColor,
@@ -108,7 +129,8 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
               {EMOJIS.map(emoji => (
                 <button
                   key={emoji}
-                  onClick={(e) => {
+                  onPointerDown={(e) => {
+                    e.preventDefault()
                     e.stopPropagation()
                     setShowPicker(false)
                     if (id && onReact) onReact(id, emoji)
