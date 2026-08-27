@@ -42,7 +42,7 @@ export default function AdminPanel() {
             Sign out
           </button>
         </div>
-        <div className="mx-auto flex max-w-4xl gap-1 px-2">
+        <div className="mx-auto flex max-w-4xl gap-1 px-2 overflow-x-auto scrollbar-hide">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -53,7 +53,7 @@ export default function AdminPanel() {
                    setSelectedQuestionId('all')
                 }
               }}
-              className={`px-3 py-2 text-sm font-medium border-b-2 transition ${
+              className={`whitespace-nowrap shrink-0 px-3 py-2 text-sm font-medium border-b-2 transition ${
                 tab === t.id ? 'border-white text-white' : 'border-transparent text-white/60'
               }`}
             >
