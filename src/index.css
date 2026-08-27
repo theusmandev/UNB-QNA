@@ -24,8 +24,9 @@ body {
 
 .urdu-text {
   font-family: 'Gulzar', 'Noto Nastaliq Urdu', serif;
-  line-height: 2.1;
+  line-height: 2.2;
   font-size: 1.05rem;
+  padding-top: 0.25rem;
 }
 
 .bubble-tail-in::before {

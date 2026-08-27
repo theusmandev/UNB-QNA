@@ -13,6 +13,7 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
   const [questions, setQuestions] = useState<QuestionWithCount[]>([])
   const [newText, setNewText] = useState('')
   const [customSlug, setCustomSlug] = useState('')
+  const [iconEmoji, setIconEmoji] = useState('')
   const [slugError, setSlugError] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -82,7 +83,11 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
     }
 
     setCreating(true)
-    const { error } = await supabase.from('questions').insert({ slug: finalSlug, question_text: text })
+    const { error } = await supabase.from('questions').insert({ 
+      slug: finalSlug, 
+      question_text: text,
+      icon_emoji: iconEmoji.trim() || null
+    })
     setCreating(false)
     
     if (error) {
@@ -96,6 +101,7 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
     
     setNewText('')
     setCustomSlug('')
+    setIconEmoji('')
     load()
   }
 
@@ -152,6 +158,13 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
               onChange={(e) => setCustomSlug(e.target.value)}
               placeholder="Custom link (optional)"
               className="sm:w-48 rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-wa-teal"
+            />
+            <input
+              value={iconEmoji}
+              onChange={(e) => setIconEmoji(e.target.value)}
+              placeholder="Emoji"
+              maxLength={5}
+              className="w-16 text-center rounded-lg border border-black/10 px-2 py-2.5 text-sm outline-none focus:border-wa-teal"
             />
             <button
               onClick={handleCreate}

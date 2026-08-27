@@ -20,6 +20,7 @@ create table if not exists public.questions (
 
 alter table public.questions add column if not exists is_pinned boolean not null default false;
 alter table public.questions add column if not exists pinned_at timestamptz;
+alter table public.questions add column if not exists icon_emoji text;
 
 -- Raw responses. Contains PII (reader_name, reader_email) — never exposed to
 -- anon directly. Public visitors only ever see safe columns via the
@@ -186,7 +187,8 @@ returns table (
   accepting_responses boolean,
   created_at timestamptz,
   is_pinned boolean,
-  pinned_at timestamptz
+  pinned_at timestamptz,
+  icon_emoji text
 )
 language sql
 security definer
@@ -201,7 +203,8 @@ as $$
     q.accepting_responses,
     q.created_at,
     q.is_pinned,
-    q.pinned_at
+    q.pinned_at,
+    q.icon_emoji
   from public.questions q
   left join public.responses r on r.question_id = q.id
   where q.is_active = true

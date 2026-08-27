@@ -206,7 +206,7 @@ export default function Home() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto bg-gray-50/50">
+      <div className="flex-1 overflow-y-auto bg-gray-50/50 pb-20">
         {activeTab === 'chats' ? (
           loading ? (
             <div className="flex h-32 items-center justify-center text-sm text-wa-muted">
@@ -237,7 +237,7 @@ export default function Home() {
                       className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-gray-50 active:bg-gray-100"
                     >
                       <div className="flex h-12 w-12 flex-none items-center justify-center rounded-full bg-wa-header text-xl font-semibold text-white">
-                        {channelName.charAt(0)}
+                        {q.icon_emoji || channelName.charAt(0)}
                       </div>
                       <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
                         <div className="min-w-0 flex-1">

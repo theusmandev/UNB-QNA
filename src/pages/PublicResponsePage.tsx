@@ -41,7 +41,7 @@ export default function PublicResponsePage() {
   const load = useCallback(async () => {
     const { data: q, error: qErr } = await supabase
       .from('questions')
-      .select('id, slug, question_text, is_active, accepting_responses, created_at')
+      .select('id, slug, question_text, is_active, accepting_responses, created_at, icon_emoji')
       .eq('slug', slug)
       .maybeSingle()
 
@@ -155,6 +155,7 @@ export default function PublicResponsePage() {
     <div className="flex flex-col" style={{ height: '100dvh' }}>
       <Header
         subtitle={count !== null ? `${count} response${count === 1 ? '' : 's'}` : 'Channel'}
+        icon={question.icon_emoji}
       />
 
       <div className="relative flex-1 flex flex-col min-h-0">
