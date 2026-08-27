@@ -563,3 +563,57 @@ AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_reader_stats_for_question(uuid) TO authenticated;
+
+-- ============================================================================
+-- ADMIN: OVERVIEW STATS
+-- ============================================================================
+-- Returns a single JSON object with high-level stats and leaderboard for the 
+-- admin dashboard overview tab.
+
+DROP FUNCTION IF EXISTS public.get_admin_overview_stats();
+CREATE OR REPLACE FUNCTION public.get_admin_overview_stats()
+RETURNS json
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  WITH question_stats AS (
+    SELECT 
+      COUNT(*) AS total_questions,
+      COUNT(*) FILTER (WHERE is_active = true) AS active_questions
+    FROM public.questions
+  ),
+  response_stats AS (
+    SELECT
+      COUNT(DISTINCT reader_email) AS unique_readers,
+      COUNT(*) FILTER (WHERE reply_text IS NOT NULL) AS published_replies,
+      COUNT(*) FILTER (WHERE reply_text IS NULL) AS pending_replies
+    FROM public.responses
+  ),
+  update_stats AS (
+    SELECT COUNT(*) AS total_updates
+    FROM public.updates
+  ),
+  loyal_readers AS (
+    SELECT 
+      reader_name,
+      reader_email,
+      COUNT(*) AS response_count
+    FROM public.responses
+    GROUP BY reader_email, reader_name
+    ORDER BY response_count DESC
+    LIMIT 20
+  )
+  SELECT json_build_object(
+    'total_questions', (SELECT total_questions FROM question_stats),
+    'active_questions', (SELECT active_questions FROM question_stats),
+    'unique_readers', (SELECT unique_readers FROM response_stats),
+    'published_replies', (SELECT published_replies FROM response_stats),
+    'pending_replies', (SELECT pending_replies FROM response_stats),
+    'total_updates', (SELECT total_updates FROM update_stats),
+    'loyal_readers', coalesce((SELECT json_agg(row_to_json(loyal_readers)) FROM loyal_readers), '[]'::json)
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_admin_overview_stats() TO authenticated;
