@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { channelName, supabase } from '../lib/supabase'
 import { formatSimpleDate } from '../lib/date'
@@ -41,6 +41,35 @@ export default function Home() {
   
   // We just need the visitorId for reactions
   const { visitorId } = useLocalIdentity('home')
+
+  const touchStartX = useRef<number | null>(null)
+  const touchStartY = useRef<number | null>(null)
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null || touchStartY.current === null) return
+    
+    const endX = e.changedTouches[0].clientX
+    const endY = e.changedTouches[0].clientY
+    
+    const deltaX = endX - touchStartX.current
+    const deltaY = endY - touchStartY.current
+    
+    if (Math.abs(deltaX) > 50 && Math.abs(deltaY) < 40) {
+      if (deltaX > 0 && activeTab === 'updates') {
+        setActiveTab('chats')
+      } else if (deltaX < 0 && activeTab === 'chats') {
+        setActiveTab('updates')
+      }
+    }
+    
+    touchStartX.current = null
+    touchStartY.current = null
+  }
 
   useEffect(() => {
     async function loadInitial() {
@@ -206,7 +235,11 @@ export default function Home() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto bg-gray-50/50 pb-20">
+      <div 
+        className="flex-1 overflow-y-auto bg-gray-50/50 pb-20"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {activeTab === 'chats' ? (
           loading ? (
             <div className="flex h-32 items-center justify-center text-sm text-wa-muted">
