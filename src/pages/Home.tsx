@@ -4,6 +4,7 @@ import { channelName, supabase } from '../lib/supabase'
 import { formatSimpleDate } from '../lib/date'
 import { isUrdu } from '../lib/isUrdu'
 import { useLocalIdentity } from '../hooks/useLocalIdentity'
+import { useSiteSettings } from '../contexts/SiteSettingsContext'
 import Header from '../components/Header'
 import UpdatesTab from '../components/UpdatesTab'
 import type { ActiveQuestionWithCount } from '../types'
@@ -20,9 +21,15 @@ export default function Home() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [showIOSPrompt, setShowIOSPrompt] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
-  const [dismissedInstall, setDismissedInstall] = useState(() => {
-    return localStorage.getItem('unb_dismiss_install') === 'true'
+  const { showInstallBanner, installBannerCampaign } = useSiteSettings()
+  const [dismissedCampaign, setDismissedCampaign] = useState(() => {
+    const stored = localStorage.getItem('unb_dismissed_campaign')
+    if (stored) return parseInt(stored, 10)
+    if (localStorage.getItem('unb_dismiss_install') === 'true') return 1
+    return 0
   })
+
+  const isDismissed = dismissedCampaign >= installBannerCampaign
 
   const navigate = useNavigate()
   
@@ -109,8 +116,8 @@ export default function Home() {
   }
 
   function dismissInstall() {
-    setDismissedInstall(true)
-    localStorage.setItem('unb_dismiss_install', 'true')
+    setDismissedCampaign(installBannerCampaign)
+    localStorage.setItem('unb_dismissed_campaign', installBannerCampaign.toString())
   }
 
   async function loadMore() {
@@ -160,7 +167,7 @@ export default function Home() {
       <Header subtitle="Response Collector" right={rightHeader} />
 
       {/* PWA Install Banner */}
-      {!isInstalled && !dismissedInstall && (deferredPrompt || showIOSPrompt) && (
+      {!isInstalled && !isDismissed && showInstallBanner && (deferredPrompt || showIOSPrompt) && (
         <div className="bg-wa-teal/10 px-4 py-3 flex items-center justify-between gap-3 border-b border-wa-teal/20">
           <div className="flex-1 min-w-0">
             <h4 className="text-sm font-semibold text-wa-ink">Install Urdu Novel Bank</h4>
