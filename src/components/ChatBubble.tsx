@@ -176,7 +176,7 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
           )}
 
           {label && <p className="text-xs font-semibold text-wa-teal mb-0.5">{label}</p>}
-          <p
+          <div
             dir={rtl ? 'rtl' : 'ltr'}
             className={[
               'whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed text-wa-ink',
@@ -187,20 +187,34 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
             {shouldTruncate && (
               <button 
                 type="button"
-                onClick={(e) => { e.stopPropagation(); setIsExpanded(true) }}
+                onClick={(e) => { 
+                  e.preventDefault();
+                  e.stopPropagation(); 
+                  setIsExpanded(true);
+                }}
                 onPointerDown={(e) => e.stopPropagation()}
+                onPointerUp={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onMouseUp={(e) => e.stopPropagation()}
                 className="text-wa-teal font-medium cursor-pointer select-none mx-1 inline-block bg-transparent border-none p-0"
                 style={{ touchAction: 'manipulation' }}
               >
                 Read more
               </button>
             )}
-          </p>
+          </div>
           {isLong && isExpanded && (
             <button 
               type="button"
-              onClick={(e) => { e.stopPropagation(); setIsExpanded(false) }}
+              onClick={(e) => { 
+                e.preventDefault();
+                e.stopPropagation(); 
+                setIsExpanded(false);
+              }}
               onPointerDown={(e) => e.stopPropagation()}
+              onPointerUp={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
               className={`text-wa-teal text-[0.9rem] font-medium cursor-pointer select-none mt-1 block w-full bg-transparent border-none p-0 ${rtl ? 'text-right' : 'text-left'}`}
               style={{ touchAction: 'manipulation' }}
             >
