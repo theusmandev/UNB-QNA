@@ -25,8 +25,7 @@ export default function IdentityModal({ onConfirm, onCancel }: IdentityModalProp
       <div className="w-full max-w-sm rounded-t-2xl bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-2xl">
         <h2 className="text-base font-semibold text-wa-ink">One last thing</h2>
         <p className="mt-1 text-sm text-wa-muted">
-          Your message stays private between you and {"Urdu Novel Bank"}. Your name and email are never shown
-          publicly.
+          Your message stays private until we reply. If published, it will appear with your name (or "Anonymous"). Your email is never shown publicly.
         </p>
 
         <label className="mt-4 block text-xs font-medium text-wa-muted">Email (required)</label>
@@ -35,6 +34,7 @@ export default function IdentityModal({ onConfirm, onCancel }: IdentityModalProp
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
+          autoComplete="email"
           className="mt-1 w-full rounded-lg border border-black/10 px-3 py-2.5 text-[0.95rem] outline-none focus:border-wa-teal"
           autoFocus
         />
@@ -45,6 +45,7 @@ export default function IdentityModal({ onConfirm, onCancel }: IdentityModalProp
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Anonymous Reader"
+          autoComplete="name"
           className="mt-1 w-full rounded-lg border border-black/10 px-3 py-2.5 text-[0.95rem] outline-none focus:border-wa-teal"
         />
 
