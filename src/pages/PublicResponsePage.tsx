@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useLocalIdentity } from '../hooks/useLocalIdentity'
 import { formatSimpleDate } from '../lib/date'
+import { channelName } from '../lib/supabase'
 import Header from '../components/Header'
 import ChatBubble from '../components/ChatBubble'
 import ComposeBar from '../components/ComposeBar'
@@ -42,7 +43,7 @@ export default function PublicResponsePage() {
   const load = useCallback(async () => {
     const { data: q, error: qErr } = await supabase
       .from('questions')
-      .select('id, slug, question_text, is_active, accepting_responses, created_at, icon_emoji')
+      .select('id, slug, question_text, is_active, accepting_responses, created_at, icon_emoji, sender_name')
       .eq('slug', slug)
       .maybeSingle()
 
@@ -236,6 +237,7 @@ export default function PublicResponsePage() {
   return (
     <div className="flex flex-col" style={{ height: '100dvh' }}>
       <Header
+        title={question.sender_name || channelName}
         subtitle={count !== null ? `${count} response${count === 1 ? '' : 's'}` : 'Channel'}
         icon={question.icon_emoji}
         showBack={true}
@@ -278,7 +280,7 @@ export default function PublicResponsePage() {
                 id={item.id}
                 variant="channel"
                 text={item.reply_text}
-                label="Urdu Novel Bank"
+                label={question.sender_name || channelName}
                 timestamp={item.replied_at}
                 reactions={item.reactions}
                 myReactions={item.id ? myReactions[item.id] : []}

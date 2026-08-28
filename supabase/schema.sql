@@ -21,6 +21,8 @@ create table if not exists public.questions (
 alter table public.questions add column if not exists is_pinned boolean not null default false;
 alter table public.questions add column if not exists pinned_at timestamptz;
 alter table public.questions add column if not exists icon_emoji text;
+alter table public.questions add column if not exists sender_name text;
+
 
 -- Raw responses. Contains PII (reader_name, reader_email) — never exposed to
 -- anon directly. Public visitors only ever see safe columns via the

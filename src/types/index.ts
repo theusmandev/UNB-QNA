@@ -9,6 +9,7 @@ export interface Question {
   is_pinned?: boolean
   pinned_at?: string | null
   icon_emoji?: string | null
+  sender_name?: string | null
 }
 
 /** Full row — only ever fetched by an authenticated admin. Contains PII. */
@@ -57,6 +58,7 @@ export interface ActiveQuestionWithCount {
   is_pinned: boolean
   pinned_at: string | null
   icon_emoji: string | null
+  sender_name?: string | null
 }
 
 export interface Update {

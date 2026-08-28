@@ -14,6 +14,7 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
   const [newText, setNewText] = useState('')
   const [customSlug, setCustomSlug] = useState('')
   const [iconEmoji, setIconEmoji] = useState('')
+  const [senderName, setSenderName] = useState('')
   const [slugError, setSlugError] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -124,7 +125,8 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
     const { error } = await supabase.from('questions').insert({ 
       slug: finalSlug, 
       question_text: text,
-      icon_emoji: iconEmoji.trim() || null
+      icon_emoji: iconEmoji.trim() || null,
+      sender_name: senderName.trim() || null
     })
     setCreating(false)
     
@@ -140,6 +142,7 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
     setNewText('')
     setCustomSlug('')
     setIconEmoji('')
+    setSenderName('')
     load()
   }
 
@@ -203,6 +206,14 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
               placeholder="Emoji"
               maxLength={5}
               className="w-16 text-center rounded-lg border border-black/10 px-2 py-2.5 text-sm outline-none focus:border-wa-teal"
+            />
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              value={senderName}
+              onChange={(e) => setSenderName(e.target.value)}
+              placeholder="Display name for this chat (optional)"
+              className="flex-1 rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-wa-teal"
             />
             <button
               onClick={handleCreate}
