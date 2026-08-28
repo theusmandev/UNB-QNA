@@ -112,19 +112,48 @@ export default function AdminResponsesTab({
   useEffect(() => {
     const channel = supabase
       .channel(`admin-responses-${filter}-${statusFilter}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'responses' }, () => {
-        setOffset(prev => {
-          loadResponses(0, false, prev + limit)
-          return prev
-        })
-        loadReaderStats()
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'responses' }, (payload) => {
+        setResponses(prev => {
+          const checkMatch = (row: any) => {
+            const matchesQuestion = filter === 'all' || row.question_id === filter;
+            const matchesStatus = statusFilter === 'all' ||
+              (statusFilter === 'pending' && row.reply_text === null) ||
+              (statusFilter === 'answered' && row.reply_text !== null);
+            return matchesQuestion && matchesStatus;
+          };
+
+          if (payload.eventType === 'INSERT') {
+            const newRow = payload.new as ResponseRow;
+            if (checkMatch(newRow)) {
+              return [newRow, ...prev];
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedRow = payload.new as ResponseRow;
+            if (checkMatch(updatedRow)) {
+              if (prev.some(r => r.id === updatedRow.id)) {
+                return prev.map(r => (r.id === updatedRow.id ? updatedRow : r));
+              } else {
+                return [updatedRow, ...prev].sort(
+                  (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                );
+              }
+            } else {
+              return prev.filter(r => r.id !== updatedRow.id);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            return prev.filter(r => r.id !== payload.old.id);
+          }
+          return prev;
+        });
+
+        loadReaderStats();
       })
-      .subscribe()
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [filter, statusFilter, loadReaderStats])
+      supabase.removeChannel(channel);
+    };
+  }, [filter, statusFilter, loadReaderStats]);
 
   function loadMore() {
     const nextOffset = offset + limit
