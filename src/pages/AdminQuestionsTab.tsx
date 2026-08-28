@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { publicBaseUrl, supabase } from '../lib/supabase'
 import { formatSimpleDate } from '../lib/date'
 import { slugify } from '../lib/slug'
+import { useLiveViewers } from '../hooks/useLiveViewers'
 import type { Question } from '../types'
 
 interface QuestionWithCount extends Question {
@@ -18,6 +19,8 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
   const [slugError, setSlugError] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [loading, setLoading] = useState(true)
+
+  const viewerCounts = useLiveViewers()
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null)
 
   const [offset, setOffset] = useState(0)
@@ -254,6 +257,15 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
                   >
                     {q.is_active ? 'Active' : 'Inactive'}
                   </span>
+                  {(viewerCounts[q.slug] > 0) && (
+                    <span className="flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700 border border-green-200" title={`${viewerCounts[q.slug]} people reading now`}>
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                      </span>
+                      👁️ {viewerCounts[q.slug]}
+                    </span>
+                  )}
                 </div>
               </div>
               <p className="mt-1 text-[11px] text-wa-muted">

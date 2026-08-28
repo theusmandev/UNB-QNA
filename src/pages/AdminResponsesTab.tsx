@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { linkify } from '../lib/linkify'
+import { useLiveViewers } from '../hooks/useLiveViewers'
 import type { Question, ResponseRow } from '../types'
 
 interface ReaderStat {
@@ -28,6 +29,8 @@ export default function AdminResponsesTab({
   const [loadingMore, setLoadingMore] = useState(false)
   const limit = 20
 
+  const viewerCounts = useLiveViewers()
+  
   const [readerStats, setReaderStats] = useState<Record<string, ReaderStat>>({})
 
   useEffect(() => {
@@ -179,9 +182,10 @@ export default function AdminResponsesTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-wa-muted">Question</label>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-wa-muted">Question</label>
           <select
             value={filter}
             onChange={(e) => onSelectQuestion?.(e.target.value)}
@@ -208,8 +212,31 @@ export default function AdminResponsesTab({
           </select>
         </div>
       </div>
+      
+        {filter !== 'all' && (
+          <div className="flex items-center ml-auto">
+            {(() => {
+              const q = questions.find(q => q.id === filter)
+              const slug = q?.slug
+              if (!slug) return null
+              const count = viewerCounts[slug] || 0
+              if (count === 0) return null
+              
+              return (
+                <div className="flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 border border-green-200 shadow-sm" title={`${count} people reading now`}>
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  </span>
+                  <span>{count} reading now</span>
+                </div>
+              )
+            })()}
+          </div>
+        )}
+      </div>
 
-      {loading && <p className="text-sm text-wa-muted">Loading…</p>}
+      {loading && <p className="text-sm text-wa-muted">Loading responses…</p>}
       {!loading && responses.length === 0 && <p className="text-sm text-wa-muted">No responses here yet.</p>}
 
       <ul className="space-y-3">

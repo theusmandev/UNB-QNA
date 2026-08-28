@@ -107,14 +107,23 @@ export default function PublicResponsePage() {
     load()
     const interval = setInterval(load, 10000)
     
-    const channel = supabase
+    const feedChannel = supabase
       .channel(`public-feed-${slug}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'response_reactions' }, load)
       .subscribe()
 
+    // Join the global presence channel
+    const presenceChannel = supabase.channel('presence-global')
+    presenceChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await presenceChannel.track({ slug })
+      }
+    })
+
     return () => {
       clearInterval(interval)
-      supabase.removeChannel(channel)
+      supabase.removeChannel(feedChannel)
+      supabase.removeChannel(presenceChannel)
     }
   }, [load, slug])
 
