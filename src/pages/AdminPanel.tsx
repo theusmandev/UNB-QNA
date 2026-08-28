@@ -19,12 +19,27 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function AdminPanel() {
   const { signOut } = useAuth()
-  const [tab, setTab] = useState<Tab>('overview')
-  const [selectedQuestionId, setSelectedQuestionId] = useState<string>('all')
+  const [tab, setTab] = useState<Tab>(
+    () => (localStorage.getItem('admin_tab') as Tab) || 'overview'
+  )
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string>(
+    () => localStorage.getItem('admin_question_id') || 'all'
+  )
 
   const handleViewResponses = (questionId: string) => {
     setSelectedQuestionId(questionId)
+    localStorage.setItem('admin_question_id', questionId)
     setTab('responses')
+    localStorage.setItem('admin_tab', 'responses')
+  }
+
+  const handleTabChange = (newTab: Tab) => {
+    setTab(newTab)
+    localStorage.setItem('admin_tab', newTab)
+    if (newTab === 'questions') {
+      setSelectedQuestionId('all')
+      localStorage.setItem('admin_question_id', 'all')
+    }
   }
 
   return (
@@ -46,13 +61,7 @@ export default function AdminPanel() {
           {TABS.map((t) => (
             <button
               key={t.id}
-              onClick={() => {
-                setTab(t.id)
-                if (t.id === 'questions') {
-                   // reset filter when navigating back to questions tab manually
-                   setSelectedQuestionId('all')
-                }
-              }}
+              onClick={() => handleTabChange(t.id)}
               className={`whitespace-nowrap shrink-0 px-3 py-2 text-sm font-medium border-b-2 transition ${
                 tab === t.id ? 'border-white text-white' : 'border-transparent text-white/60'
               }`}
