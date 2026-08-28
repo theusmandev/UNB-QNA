@@ -290,9 +290,10 @@ export default function Home() {
                       <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <p 
-                            dir={isUrdu(q.question_text) ? 'rtl' : 'ltr'}
+                            dir="auto"
+                            style={{ unicodeBidi: 'plaintext' }}
                             className={`truncate text-[15px] font-semibold text-wa-ink ${
-                              isUrdu(q.question_text) ? 'urdu-text text-right' : 'text-left'
+                              isUrdu(q.question_text) ? 'urdu-text' : ''
                             }`}
                           >
                             {q.question_text}

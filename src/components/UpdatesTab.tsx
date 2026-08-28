@@ -200,8 +200,9 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
           >
             <div className="flex justify-between items-start gap-2">
               <h3 
-                dir={isUrdu(update.title) ? 'rtl' : 'ltr'}
-                className={`text-base font-semibold text-wa-ink ${isUrdu(update.title) ? 'urdu-text text-right' : 'text-left'}`}
+                dir="auto"
+                style={{ unicodeBidi: 'plaintext' }}
+                className={`text-base font-semibold text-wa-ink ${isUrdu(update.title) ? 'urdu-text' : ''}`}
               >
                 {update.title}
               </h3>
@@ -224,8 +225,10 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
             {isExpanded && (
               <>
                 <div 
+                  dir="auto"
+                  style={{ unicodeBidi: 'plaintext' }}
                   className={`whitespace-pre-wrap text-[15px] leading-relaxed mt-2 [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5] [&_img]:max-w-full [&_img]:rounded-lg [&_img]:my-2
-                    ${isUrdu(update.content) ? 'urdu-text text-right text-wa-ink' : 'text-left text-wa-ink'}`}
+                    ${isUrdu(update.content) ? 'urdu-text' : 'text-wa-ink'}`}
                   dangerouslySetInnerHTML={{ 
                     __html: DOMPurify.sanitize(update.content, { 
                       ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'strike', 'blockquote', 'h1', 'h2', 'h3'], 

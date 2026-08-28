@@ -182,10 +182,11 @@ export default function ChatBubble({ id, text, variant, label, timestamp, showTi
 
           {label && <p className="text-xs font-semibold text-wa-teal mb-0.5">{label}</p>}
           <div
-            dir={rtl ? 'rtl' : 'ltr'}
+            dir="auto"
+            style={{ unicodeBidi: 'plaintext' }}
             className={[
               'whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed text-wa-ink',
-              rtl ? 'urdu-text text-right' : 'text-left',
+              rtl ? 'urdu-text' : '',
             ].join(' ')}
           >
             {variant === 'channel' ? linkify(displayText) : displayText}

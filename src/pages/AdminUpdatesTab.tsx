@@ -419,13 +419,16 @@ export default function AdminUpdatesTab() {
             return (
               <li key={update.id} className="rounded-xl bg-white p-4 shadow-sm">
                 <h3 
-                  dir={isUrdu(update.title) ? 'rtl' : 'ltr'}
-                  className={`text-base font-semibold text-wa-ink mb-1 ${isUrdu(update.title) ? 'urdu-text text-right' : 'text-left'}`}
+                  dir="auto"
+                  style={{ unicodeBidi: 'plaintext' }}
+                  className={`text-base font-semibold text-wa-ink mb-1 ${isUrdu(update.title) ? 'urdu-text' : ''}`}
                 >
                   {update.title}
                 </h3>
                 <div 
-                  className="whitespace-pre-wrap text-[15px] leading-relaxed text-wa-ink [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5]"
+                  dir="auto"
+                  style={{ unicodeBidi: 'plaintext' }}
+                  className={`whitespace-pre-wrap text-[15px] leading-relaxed text-wa-ink [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5] ${isUrdu(update.content) ? 'urdu-text' : ''}`}
                   dangerouslySetInnerHTML={{ 
                     __html: DOMPurify.sanitize(update.content, { 
                       ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'strike', 'blockquote', 'h1', 'h2', 'h3'], 

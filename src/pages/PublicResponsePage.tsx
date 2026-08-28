@@ -250,11 +250,10 @@ export default function PublicResponsePage() {
           <div className="rounded-lg bg-[#FCF3D7] px-3 py-2.5 shadow-bubble">
             <p className="text-xs font-semibold text-wa-teal">Question</p>
             <p
-              dir={isUrdu(question.question_text) ? 'rtl' : 'ltr'}
-              className={`text-[15px] leading-relaxed break-words whitespace-pre-wrap
-                ${isUrdu(question.question_text)
-                  ? 'urdu-text mt-0.5 text-right text-wa-ink' 
-                  : 'text-left text-wa-ink'}`}
+              dir="auto"
+              style={{ unicodeBidi: 'plaintext' }}
+              className={`text-[15px] leading-relaxed break-words whitespace-pre-wrap text-wa-ink
+                ${isUrdu(question.question_text) ? 'urdu-text mt-0.5' : ''}`}
             >
               {question.question_text}
             </p>

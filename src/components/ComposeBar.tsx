@@ -42,14 +42,15 @@ export default function ComposeBar({ onSend, disabled }: ComposeBarProps) {
         ref={textareaRef}
         value={value}
         onChange={handleChange}
-        dir={rtl ? 'rtl' : 'ltr'}
-        placeholder="Type a message"
+        dir="auto"
+        style={{ unicodeBidi: 'plaintext' }}
+        placeholder="Message"
         rows={1}
         maxLength={3000}
         disabled={disabled || sending}
         className={[
           'max-h-[30vh] min-h-[42px] flex-1 resize-none rounded-[20px] bg-white px-4 py-2.5 text-[0.95rem] leading-snug text-wa-ink shadow-sm outline-none placeholder:text-wa-muted disabled:opacity-60',
-          rtl ? 'urdu-text text-right' : 'text-left',
+          rtl ? 'urdu-text' : '',
         ].join(' ')}
       />
       <button
