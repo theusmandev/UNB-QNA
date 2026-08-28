@@ -238,6 +238,7 @@ export default function PublicResponsePage() {
       <Header
         subtitle={count !== null ? `${count} response${count === 1 ? '' : 's'}` : 'Channel'}
         icon={question.icon_emoji}
+        showBack={true}
       />
 
       <div className="relative flex-1 flex flex-col min-h-0">
