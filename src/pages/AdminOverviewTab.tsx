@@ -28,6 +28,25 @@ export default function AdminOverviewTab() {
   const [leaderboardTime, setLeaderboardTime] = useState<'this_week' | 'this_month' | 'all_time'>('all_time')
   const [readerType, setReaderType] = useState<'all' | 'named' | 'anonymous'>('all')
 
+  const [lookupEmail, setLookupEmail] = useState('')
+  const [lookupResults, setLookupResults] = useState<any[] | null>(null)
+  const [isSearching, setIsSearching] = useState(false)
+
+  const handleLookup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!lookupEmail.trim()) return
+    setIsSearching(true)
+    const { data, error } = await supabase.rpc('get_reader_history', {
+      p_email: lookupEmail.trim()
+    })
+    setIsSearching(false)
+    if (!error && data) {
+      setLookupResults(data)
+    } else {
+      setLookupResults([])
+    }
+  }
+
   const load = useCallback(async () => {
     setLoading(true)
     const { data, error } = await supabase.rpc('get_admin_overview_stats', {
@@ -61,10 +80,6 @@ export default function AdminOverviewTab() {
   }, [load])
 
   if (!stats) return <p className="text-sm text-wa-muted">Loading…</p>
-
-  const averageResponsesPerQuestion = stats.total_questions > 0
-    ? ((stats.published_replies + stats.pending_replies) / stats.total_questions).toFixed(1)
-    : '0'
 
   return (
     <div className="space-y-6">
@@ -123,12 +138,70 @@ export default function AdminOverviewTab() {
           <p className="text-xs text-wa-muted">Published</p>
           <p className="mt-1 text-[11px] font-medium text-wa-teal uppercase tracking-wider">Total Updates</p>
         </div>
-        
-        <div className="rounded-xl bg-white p-4 shadow-sm">
-          <p className="text-2xl font-semibold text-wa-ink">{averageResponsesPerQuestion}</p>
-          <p className="text-xs text-wa-muted">Overall average</p>
-          <p className="mt-1 text-[11px] font-medium text-wa-teal uppercase tracking-wider">Responses / Question</p>
-        </div>
+      </div>
+
+      {/* Reader Email Lookup */}
+      <div className="rounded-xl bg-white p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-wa-ink mb-3">Reader History Lookup</h2>
+        <form onSubmit={handleLookup} className="flex gap-2 mb-4">
+          <input
+            type="email"
+            value={lookupEmail}
+            onChange={(e) => setLookupEmail(e.target.value)}
+            placeholder="Enter reader email address..."
+            className="flex-1 rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-wa-teal focus:ring-1 focus:ring-wa-teal"
+            required
+          />
+          <button
+            type="submit"
+            disabled={isSearching}
+            className="rounded-lg bg-wa-teal px-4 py-2 text-sm font-semibold text-white hover:bg-wa-teal/90 disabled:opacity-50"
+          >
+            {isSearching ? 'Searching...' : 'Search'}
+          </button>
+        </form>
+
+        {lookupResults !== null && (
+          <div className="mt-4 border-t border-black/5 pt-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-xs font-semibold text-wa-muted uppercase tracking-wider">
+                {lookupResults.length} Result{lookupResults.length !== 1 && 's'}
+              </h3>
+              <button 
+                onClick={() => setLookupResults(null)}
+                className="text-xs text-wa-teal hover:underline"
+              >
+                Clear
+              </button>
+            </div>
+            
+            {lookupResults.length === 0 ? (
+              <p className="text-sm text-wa-muted">No history found for this email.</p>
+            ) : (
+              <ul className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
+                {lookupResults.map((r, i) => (
+                  <li key={r.response_id || i} className="rounded-lg border border-black/5 p-3">
+                    <p className="text-[11px] font-medium text-wa-muted mb-1.5 flex justify-between">
+                      <span>In response to: {r.question_text}</span>
+                      <span>{new Date(r.created_at).toLocaleDateString()}</span>
+                    </p>
+                    <p className="text-sm text-wa-ink whitespace-pre-wrap">{r.message}</p>
+                    
+                    {r.reply_text && (
+                      <div className="mt-2 ml-4 rounded-lg bg-wa-outgoing p-3">
+                        <p className="text-[10px] font-semibold text-wa-teal mb-0.5 flex justify-between">
+                          <span>Admin Reply</span>
+                          {r.replied_at && <span>{new Date(r.replied_at).toLocaleDateString()}</span>}
+                        </p>
+                        <p className="text-sm text-wa-ink whitespace-pre-wrap">{r.reply_text}</p>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Leaderboard */}

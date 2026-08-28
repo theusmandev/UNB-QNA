@@ -661,3 +661,41 @@ AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_admin_overview_stats(text, text, text, text) TO authenticated;
+
+-- ============================================================================
+-- ADMIN: READER HISTORY LOOKUP
+-- ============================================================================
+-- Returns the complete chronological history of a specific reader by their email
+-- address, spanning across all questions. Restricted to authenticated admins.
+
+DROP FUNCTION IF EXISTS public.get_reader_history(text);
+CREATE OR REPLACE FUNCTION public.get_reader_history(p_email text)
+RETURNS TABLE (
+  response_id uuid,
+  question_slug text,
+  question_text text,
+  message text,
+  reply_text text,
+  created_at timestamptz,
+  replied_at timestamptz
+)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT 
+    r.id AS response_id,
+    q.slug AS question_slug,
+    q.question_text,
+    r.message,
+    r.reply_text,
+    r.created_at,
+    r.replied_at
+  FROM public.responses r
+  JOIN public.questions q ON q.id = r.question_id
+  WHERE lower(r.reader_email) = lower(p_email)
+  ORDER BY r.created_at ASC;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_reader_history(text) TO authenticated;
