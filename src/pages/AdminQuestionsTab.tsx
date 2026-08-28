@@ -237,9 +237,9 @@ export default function AdminQuestionsTab({ onViewResponses }: { onViewResponses
         <ul className="space-y-2">
           {questions.map((q) => (
             <li key={q.id} className="rounded-xl bg-white p-3 shadow-sm">
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                 <p className="text-sm text-wa-ink">{q.question_text}</p>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                   {q.unread_count > 0 && (
                     <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
                       {q.unread_count}
