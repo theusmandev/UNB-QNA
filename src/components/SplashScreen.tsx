@@ -24,9 +24,13 @@ export default function SplashScreen({ isLoading }: SplashScreenProps) {
       }`}
     >
       <div className="flex flex-col items-center">
-        {/* Subtle pulsing logo */}
+        {/* Subtle pulsing logo container */}
         <div className="w-24 h-24 mb-6 rounded-full bg-white/10 p-4 animate-pulse">
-          <img src="/pwa-512x512.png" alt="Urdu Novel Bank" className="w-full h-full object-contain" />
+          {/* Inline SVG guarantees perfect crispness at any display size, bypassing any browser image-scaling artifacts */}
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className="w-full h-full drop-shadow-sm">
+            <rect width="512" height="512" rx="112" fill="#075E54" />
+            <text x="256" y="295" fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" fontSize="200" fontWeight="bold" fill="#ffffff" textAnchor="middle" dominantBaseline="middle">UNB</text>
+          </svg>
         </div>
         
         {/* WhatsApp-style minimal spinner / loading indicator */}
