@@ -7,20 +7,25 @@ import ProtectedRoute from './components/ProtectedRoute'
 import NotFound from './pages/NotFound'
 import Maintenance from './pages/Maintenance'
 import { SiteSettingsProvider, useSiteSettings } from './contexts/SiteSettingsContext'
+import SplashScreen from './components/SplashScreen'
 
 function MaintenanceGate({ children }: { children: React.ReactNode }) {
   const { maintenanceMode, loading } = useSiteSettings()
   
-  if (loading) {
-    // Optionally return a subtle loading state, but for now we just wait
-    return null
-  }
+  // We always render children so that they start mounting behind the splash screen.
+  // The splash screen overlay will handle its own fade out once loading is false.
   
-  if (maintenanceMode) {
+  if (maintenanceMode && !loading) {
     return <Maintenance />
   }
 
-  return <>{children}</>
+  return (
+    <>
+      <SplashScreen isLoading={loading} />
+      {/* Render actual content only when not loading to avoid flashes */}
+      {!loading && children}
+    </>
+  )
 }
 
 export default function App() {
