@@ -22,6 +22,8 @@ export default function PublicResponsePage() {
   const [showIdentityModal, setShowIdentityModal] = useState(false)
   const [pendingMessage, setPendingMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [adminTyping, setAdminTyping] = useState<{name: string} | null>(null)
+  const adminTypingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const isNearBottomRef = useRef(true)
@@ -61,6 +63,8 @@ export default function PublicResponsePage() {
     const loadedFeed = (feedData as PublicFeedItem[]) ?? []
     setFeed(loadedFeed)
     if (typeof countData === 'number') setCount(countData)
+    setAdminTyping(null)
+    if (adminTypingTimeout.current) clearTimeout(adminTypingTimeout.current)
 
     if (identity?.email) {
       // Need visitor ID which is hash of email/userAgent
@@ -114,11 +118,21 @@ export default function PublicResponsePage() {
 
     // Join the global presence channel
     const presenceChannel = supabase.channel('presence-global')
-    presenceChannel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await presenceChannel.track({ slug })
-      }
-    })
+    presenceChannel
+      .on('broadcast', { event: 'typing' }, (payload) => {
+        if (payload.payload?.slug === slug) {
+          setAdminTyping({ name: payload.payload.name || 'Admin' })
+          if (adminTypingTimeout.current) clearTimeout(adminTypingTimeout.current)
+          adminTypingTimeout.current = setTimeout(() => {
+            setAdminTyping(null)
+          }, 3000)
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({ slug })
+        }
+      })
 
     return () => {
       clearInterval(interval)
@@ -300,6 +314,17 @@ export default function PublicResponsePage() {
           {pending.filter(pItem => !feed.some(fItem => fItem.message === pItem.message)).map((item, i) => (
             <ChatBubble key={`pending-${i}`} variant="reader-pending" text={item.message} showTick />
           ))}
+
+          {adminTyping && (
+            <div className="mx-auto mt-2 max-w-xl px-4 animate-in fade-in duration-300">
+              <p className="text-xs italic text-wa-muted">
+                {adminTyping.name} is typing
+                <span className="animate-pulse">.</span>
+                <span className="animate-pulse delay-100">.</span>
+                <span className="animate-pulse delay-200">.</span>
+              </p>
+            </div>
+          )}
 
           <div ref={bottomRef} />
         </div>

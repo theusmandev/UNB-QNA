@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { linkify } from '../lib/linkify'
 import { useLiveViewers } from '../hooks/useLiveViewers'
@@ -23,6 +23,7 @@ export default function AdminResponsesTab({
   const [loading, setLoading] = useState(true)
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({})
   const [publishing, setPublishing] = useState<string | null>(null)
+  const lastTypingPing = useRef<Record<string, number>>({})
 
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
@@ -273,7 +274,24 @@ export default function AdminResponsesTab({
                   </p>
                   <textarea
                     value={replyDrafts[r.id] || ''}
-                    onChange={(e) => setReplyDrafts((d) => ({ ...d, [r.id]: e.target.value }))}
+                    onChange={(e) => {
+                      setReplyDrafts((d) => ({ ...d, [r.id]: e.target.value }))
+                      
+                      const now = Date.now()
+                      const lastPing = (lastTypingPing.current as Record<string, number>)[r.id] || 0
+                      if (now - lastPing > 1500) {
+                        ;(lastTypingPing.current as Record<string, number>)[r.id] = now
+                        const q = questions.find(q => q.id === r.question_id)
+                        if (q?.slug) {
+                          const channel = supabase.getChannels().find(c => c.topic === 'realtime:presence-global') || supabase.channel('presence-global')
+                          channel.send({
+                            type: 'broadcast',
+                            event: 'typing',
+                            payload: { slug: q.slug, name: q.sender_name || 'Admin' }
+                          })
+                        }
+                      }
+                    }}
                     placeholder="Write your public reply…"
                     rows={2}
                     className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-wa-teal"
