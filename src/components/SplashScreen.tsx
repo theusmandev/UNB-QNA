@@ -19,13 +19,13 @@ export default function SplashScreen({ isLoading }: SplashScreenProps) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-wa-header transition-opacity duration-500 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-wa-bg transition-opacity duration-500 ${
         isLoading ? 'opacity-100' : 'opacity-0'
       }`}
     >
       <div className="flex flex-col items-center">
         {/* Subtle pulsing logo container */}
-        <div className="w-24 h-24 mb-6 rounded-full bg-white/10 p-4 animate-pulse">
+        <div className="w-24 h-24 mb-6 rounded-full bg-wa-header/10 p-4 animate-pulse">
           {/* Inline SVG guarantees perfect crispness at any display size, bypassing any browser image-scaling artifacts */}
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className="w-full h-full drop-shadow-sm">
             <rect width="512" height="512" rx="112" fill="#075E54" />
@@ -35,9 +35,9 @@ export default function SplashScreen({ isLoading }: SplashScreenProps) {
         
         {/* WhatsApp-style minimal spinner / loading indicator */}
         <div className="flex items-center gap-1.5 mt-8">
-          <div className="w-2 h-2 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: '0ms' }} />
-          <div className="w-2 h-2 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: '150ms' }} />
-          <div className="w-2 h-2 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+          <div className="w-2 h-2 rounded-full bg-wa-header/60 animate-bounce" style={{ animationDelay: '0ms' }} />
+          <div className="w-2 h-2 rounded-full bg-wa-header/60 animate-bounce" style={{ animationDelay: '150ms' }} />
+          <div className="w-2 h-2 rounded-full bg-wa-header/60 animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
       </div>
     </div>

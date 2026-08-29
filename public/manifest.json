@@ -4,7 +4,7 @@
   "description": "Ask Urdu Novel Bank a question.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#075E54",
+  "background_color": "#ECE5DD",
   "theme_color": "#075E54",
   "icons": [
     {
