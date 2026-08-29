@@ -71,9 +71,11 @@ body {
 
 /* Responsive YouTube Embeds for Quill */
 .ql-video {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: 8px;
-  border: none;
-  margin: 8px 0;
+  width: 100% !important;
+  max-width: 500px !important;
+  aspect-ratio: 16 / 9 !important;
+  border-radius: 8px !important;
+  border: none !important;
+  margin: 8px auto !important;
+  display: block !important;
 }
