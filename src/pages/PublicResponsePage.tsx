@@ -370,17 +370,6 @@ export default function PublicResponsePage() {
             <ChatBubble key={`pending-${i}`} variant="reader-pending" text={item.message} showTick />
           ))}
 
-          {adminTyping && (
-            <div className="mx-auto mt-2 max-w-xl px-4 animate-in fade-in duration-300">
-              <p className="text-xs italic text-wa-muted">
-                {adminTyping.name} is typing
-                <span className="animate-pulse">.</span>
-                <span className="animate-pulse delay-100">.</span>
-                <span className="animate-pulse delay-200">.</span>
-              </p>
-            </div>
-          )}
-
           <div ref={bottomRef} />
         </div>
       </div>
@@ -404,6 +393,17 @@ export default function PublicResponsePage() {
     </div>
 
       {error && <p className="bg-red-50 px-4 py-1.5 text-center text-xs text-red-600">{error}</p>}
+
+      {adminTyping && (
+        <div className="bg-[#F0F0F0] px-4 py-1 border-t border-black/5 animate-in slide-in-from-bottom-2">
+          <p className="text-[11px] italic text-wa-muted">
+            {adminTyping.name} is typing
+            <span className="animate-pulse">.</span>
+            <span className="animate-pulse delay-100">.</span>
+            <span className="animate-pulse delay-200">.</span>
+          </p>
+        </div>
+      )}
 
       {question.accepting_responses ? (
         <div className="flex flex-col">
