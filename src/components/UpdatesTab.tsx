@@ -13,6 +13,16 @@ DOMPurify.addHook('afterSanitizeAttributes', function(node) {
   }
 });
 
+// Enforce strict rules for iframe embeds
+DOMPurify.addHook('uponSanitizeElement', function(node, data) {
+  if (data.tagName === 'iframe' && node instanceof Element) {
+    const src = node.getAttribute('src') || '';
+    if (!src.startsWith('https://www.youtube.com/embed/') && !src.startsWith('https://www.youtube-nocookie.com/embed/')) {
+      return node.parentNode?.removeChild(node);
+    }
+  }
+});
+
 const REACTIONS = ['👍', '❤️', '😂', '🎉']
 
 interface UpdatesTabProps {
@@ -231,8 +241,8 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
                     ${isUrdu(update.content) ? 'urdu-text' : 'text-wa-ink'}`}
                   dangerouslySetInnerHTML={{ 
                     __html: DOMPurify.sanitize(update.content, { 
-                      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'strike', 'blockquote', 'h1', 'h2', 'h3'], 
-                      ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class', 'dir'] 
+                      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'strike', 'blockquote', 'h1', 'h2', 'h3', 'iframe'], 
+                      ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class', 'dir', 'allow', 'allowfullscreen', 'frameborder', 'scrolling'] 
                     }) 
                   }}
                 />

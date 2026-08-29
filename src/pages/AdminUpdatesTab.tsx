@@ -17,6 +17,21 @@ DOMPurify.addHook('afterSanitizeAttributes', function(node) {
   }
 });
 
+// Enforce strict rules for iframe embeds
+DOMPurify.addHook('uponSanitizeElement', function(node, data) {
+  if (data.tagName === 'iframe' && node instanceof Element) {
+    const src = node.getAttribute('src') || '';
+    if (!src.startsWith('https://www.youtube.com/embed/') && !src.startsWith('https://www.youtube-nocookie.com/embed/')) {
+      return node.parentNode?.removeChild(node);
+    }
+  }
+});
+
+const extractYouTubeVideoId = (url: string) => {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/))([\w-]{11})/);
+  return match ? match[1] : null;
+};
+
 const CustomToolbar = () => (
   <div id="toolbar" className="border-b border-black/10 flex flex-wrap gap-y-2 p-2 bg-gray-50 rounded-t-lg">
     <span className="ql-formats mr-2">
@@ -48,6 +63,7 @@ const CustomToolbar = () => (
     <span className="ql-formats mr-2">
       <button className="ql-link" />
       <button className="ql-image" />
+      <button className="ql-video" />
     </span>
     <span className="ql-formats flex items-center">
       <button className="ql-undo !w-auto px-1.5 font-semibold text-xs text-gray-600 border border-gray-300 rounded mx-0.5 hover:bg-gray-200">Undo</button>
@@ -92,6 +108,22 @@ export default function AdminUpdatesTab() {
             if (quill) {
               const range = quill.getSelection(true)
               quill.insertEmbed(range.index, 'image', url)
+            }
+          }
+        },
+        video: function() {
+          const url = prompt('Enter the YouTube URL:')
+          if (url) {
+            const videoId = extractYouTubeVideoId(url)
+            if (videoId) {
+              const safeUrl = `https://www.youtube-nocookie.com/embed/${videoId}`
+              const quill = quillRef.current?.getEditor()
+              if (quill) {
+                const range = quill.getSelection(true)
+                quill.insertEmbed(range.index, 'video', safeUrl)
+              }
+            } else {
+              alert('Invalid YouTube URL')
             }
           }
         }
@@ -149,6 +181,22 @@ export default function AdminUpdatesTab() {
             if (quill) {
               const range = quill.getSelection(true)
               quill.insertEmbed(range.index, 'image', url)
+            }
+          }
+        },
+        video: function() {
+          const url = prompt('Enter the YouTube URL:')
+          if (url) {
+            const videoId = extractYouTubeVideoId(url)
+            if (videoId) {
+              const safeUrl = `https://www.youtube-nocookie.com/embed/${videoId}`
+              const quill = editQuillRef.current?.getEditor()
+              if (quill) {
+                const range = quill.getSelection(true)
+                quill.insertEmbed(range.index, 'video', safeUrl)
+              }
+            } else {
+              alert('Invalid YouTube URL')
             }
           }
         }
@@ -379,6 +427,7 @@ export default function AdminUpdatesTab() {
                         <span className="ql-formats mr-2">
                           <button className="ql-link" />
                           <button className="ql-image" />
+                          <button className="ql-video" />
                         </span>
                         <span className="ql-formats flex items-center">
                           <button className="ql-undo !w-auto px-1.5 font-semibold text-xs text-gray-600 border border-gray-300 rounded mx-0.5 hover:bg-gray-200">Undo</button>
@@ -431,8 +480,8 @@ export default function AdminUpdatesTab() {
                   className={`whitespace-pre-wrap text-[15px] leading-relaxed text-wa-ink [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5] ${isUrdu(update.content) ? 'urdu-text' : ''}`}
                   dangerouslySetInnerHTML={{ 
                     __html: DOMPurify.sanitize(update.content, { 
-                      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'strike', 'blockquote', 'h1', 'h2', 'h3'], 
-                      ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class', 'dir'] 
+                      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'strike', 'blockquote', 'h1', 'h2', 'h3', 'iframe'], 
+                      ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class', 'dir', 'allow', 'allowfullscreen', 'frameborder', 'scrolling'] 
                     }) 
                   }}
                 />
