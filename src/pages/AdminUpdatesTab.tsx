@@ -477,7 +477,7 @@ export default function AdminUpdatesTab() {
                 <div 
                   dir="auto"
                   style={{ unicodeBidi: 'plaintext' }}
-                  className={`whitespace-pre-wrap text-[15px] leading-relaxed text-wa-ink [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5] ${isUrdu(update.content) ? 'urdu-text' : ''}`}
+                  className={`whitespace-pre-wrap text-[15px] leading-relaxed text-wa-ink [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5] [&_img]:max-w-[500px] [&_img]:w-full [&_img]:rounded-lg [&_img]:my-2 [&_img]:mx-auto [&_img]:block ${isUrdu(update.content) ? 'urdu-text' : ''}`}
                   dangerouslySetInnerHTML={{ 
                     __html: DOMPurify.sanitize(update.content, { 
                       ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'strike', 'blockquote', 'h1', 'h2', 'h3', 'iframe'], 

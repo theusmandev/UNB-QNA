@@ -237,7 +237,7 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
                 <div 
                   dir="auto"
                   style={{ unicodeBidi: 'plaintext' }}
-                  className={`whitespace-pre-wrap text-[15px] leading-relaxed mt-2 [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5] [&_img]:max-w-full [&_img]:rounded-lg [&_img]:my-2
+                  className={`whitespace-pre-wrap text-[15px] leading-relaxed mt-2 [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5] [&_img]:max-w-[500px] [&_img]:w-full [&_img]:rounded-lg [&_img]:my-2 [&_img]:mx-auto [&_img]:block
                     ${isUrdu(update.content) ? 'urdu-text' : 'text-wa-ink'}`}
                   dangerouslySetInnerHTML={{ 
                     __html: DOMPurify.sanitize(update.content, { 
