@@ -219,7 +219,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-white">
-      <Header subtitle="Response Collector" right={rightHeader} />
+      <Header subtitle="Q&A" right={rightHeader} />
 
       {/* PWA Install Banner */}
       {!isInstalled && !isDismissed && showInstallBanner && (deferredPrompt || showIOSPrompt) && (

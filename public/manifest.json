@@ -1,6 +1,6 @@
 {
-  "name": "Urdu Novel Bank",
-  "short_name": "UNB",
+  "name": "Urdu Novel Bank Q&A",
+  "short_name": "UNB Q&A",
   "description": "Ask Urdu Novel Bank a question.",
   "start_url": "/",
   "display": "standalone",

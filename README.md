@@ -1,4 +1,4 @@
-# Urdu Novel Bank — Response Collector
+# Urdu Novel Bank — Q&A
 
 A WhatsApp Channel "Questions"-style app: you post a question and share a link,
 readers reply privately, and you choose which replies to publish as a public
