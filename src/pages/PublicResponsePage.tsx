@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useLocalIdentity } from '../hooks/useLocalIdentity'
 import { useSiteSettings } from '../contexts/SiteSettingsContext'
@@ -305,9 +305,17 @@ export default function PublicResponsePage() {
 
   if (question === null) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-2 px-6 text-center">
-        <p className="text-lg font-semibold text-wa-ink">This link isn't available</p>
-        <p className="text-sm text-wa-muted">The question may have been removed or is no longer active.</p>
+      <div className="flex h-screen flex-col items-center justify-center gap-4 px-6 text-center">
+        <div>
+          <p className="text-lg font-semibold text-wa-ink mb-1">This link isn't available</p>
+          <p className="text-sm text-wa-muted">The question may have been removed or is no longer active.</p>
+        </div>
+        <Link 
+          to="/" 
+          className="mt-2 inline-flex items-center justify-center rounded-full bg-wa-teal px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700 active:scale-95"
+        >
+          Go to homepage
+        </Link>
       </div>
     )
   }
