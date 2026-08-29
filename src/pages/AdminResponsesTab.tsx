@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { linkify } from '../lib/linkify'
+import { formatSimpleDate } from '../lib/date'
 import { useLiveViewers } from '../hooks/useLiveViewers'
 import type { Question, ResponseRow } from '../types'
 
@@ -249,7 +250,11 @@ export default function AdminResponsesTab({
             <li key={r.id} className="rounded-xl bg-white p-4 shadow-sm">
               <div className="flex flex-wrap items-baseline justify-between gap-1">
                 <p className="text-sm font-medium text-wa-ink">{r.reader_name || 'Anonymous Reader'}</p>
-                <p className="text-[11px] text-wa-muted">{r.reader_email}</p>
+                <div className="flex flex-col items-end sm:flex-row sm:items-center sm:gap-1.5 text-[11px] text-wa-muted text-right">
+                  <p>{r.reader_email}</p>
+                  <span className="hidden sm:inline opacity-50">•</span>
+                  <p>{formatSimpleDate(r.created_at)}, {new Date(r.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</p>
+                </div>
               </div>
               <p className="mt-1 whitespace-pre-wrap text-sm text-wa-ink">{r.message}</p>
 
