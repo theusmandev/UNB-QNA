@@ -228,10 +228,16 @@ export default function PublicResponsePage() {
     setCount((c) => (c === null ? null : c + 1))
 
     // Check if we should prompt for push notifications
-    const declinedCampaign = parseInt(localStorage.getItem('unb_push_prompt_declined_campaign') || '0', 10)
+    let declinedCampaign = 0
+    try {
+      declinedCampaign = parseInt(localStorage.getItem('unb_push_prompt_declined_campaign') || '0', 10)
+    } catch {
+      // Ignore localStorage errors
+    }
     
     if (
       'PushManager' in window &&
+      'Notification' in window &&
       showPushPromptSetting &&
       declinedCampaign < pushPromptCampaign &&
       Notification.permission !== 'granted' &&
