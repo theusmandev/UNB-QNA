@@ -25,7 +25,7 @@ export default function SplashScreen({ isLoading }: SplashScreenProps) {
     >
       <div className="flex flex-col items-center">
         {/* Subtle pulsing logo container */}
-        <div className="w-10 h-10 mb-6 rounded-full bg-wa-header/10 p-1.5 animate-pulse">
+        <div className="w-20 h-20 mb-6 rounded-full bg-wa-header/10 p-3 animate-pulse">
           {/* Inline SVG guarantees perfect crispness at any display size, bypassing any browser image-scaling artifacts */}
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className="w-full h-full drop-shadow-sm">
             <rect width="512" height="512" rx="112" fill="#075E54" />
