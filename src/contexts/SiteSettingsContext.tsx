@@ -5,6 +5,8 @@ interface SiteSettingsContextType {
   maintenanceMode: boolean
   showInstallBanner: boolean
   installBannerCampaign: number
+  showPushPrompt: boolean
+  pushPromptCampaign: number
   loading: boolean
 }
 
@@ -12,6 +14,8 @@ const SiteSettingsContext = createContext<SiteSettingsContextType>({
   maintenanceMode: false,
   showInstallBanner: true,
   installBannerCampaign: 1,
+  showPushPrompt: true,
+  pushPromptCampaign: 1,
   loading: true
 })
 
@@ -19,6 +23,8 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
   const [maintenanceMode, setMaintenanceMode] = useState(false)
   const [showInstallBanner, setShowInstallBanner] = useState(true)
   const [installBannerCampaign, setInstallBannerCampaign] = useState(1)
+  const [showPushPrompt, setShowPushPrompt] = useState(true)
+  const [pushPromptCampaign, setPushPromptCampaign] = useState(1)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -26,7 +32,7 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
       try {
         const { data, error } = await supabase
           .from('site_settings')
-          .select('maintenance_mode, show_install_banner, install_banner_campaign')
+          .select('maintenance_mode, show_install_banner, install_banner_campaign, show_push_prompt, push_prompt_campaign')
           .eq('id', 1)
           .maybeSingle()
 
@@ -34,6 +40,8 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
           setMaintenanceMode(data.maintenance_mode)
           if (data.show_install_banner !== undefined) setShowInstallBanner(data.show_install_banner)
           if (data.install_banner_campaign !== undefined) setInstallBannerCampaign(data.install_banner_campaign)
+          if (data.show_push_prompt !== undefined) setShowPushPrompt(data.show_push_prompt)
+          if (data.push_prompt_campaign !== undefined) setPushPromptCampaign(data.push_prompt_campaign)
         }
       } catch (err) {
         console.error('Error fetching site settings:', err)
@@ -64,6 +72,12 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
             if ('install_banner_campaign' in payload.new) {
               setInstallBannerCampaign(payload.new.install_banner_campaign)
             }
+            if ('show_push_prompt' in payload.new) {
+              setShowPushPrompt(payload.new.show_push_prompt)
+            }
+            if ('push_prompt_campaign' in payload.new) {
+              setPushPromptCampaign(payload.new.push_prompt_campaign)
+            }
           }
         }
       )
@@ -75,7 +89,7 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
   }, [])
 
   return (
-    <SiteSettingsContext.Provider value={{ maintenanceMode, showInstallBanner, installBannerCampaign, loading }}>
+    <SiteSettingsContext.Provider value={{ maintenanceMode, showInstallBanner, installBannerCampaign, showPushPrompt, pushPromptCampaign, loading }}>
       {children}
     </SiteSettingsContext.Provider>
   )

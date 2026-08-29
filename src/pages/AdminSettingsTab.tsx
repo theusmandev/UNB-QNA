@@ -5,6 +5,8 @@ export default function AdminSettingsTab() {
   const [maintenanceMode, setMaintenanceMode] = useState(false)
   const [showInstallBanner, setShowInstallBanner] = useState(true)
   const [installBannerCampaign, setInstallBannerCampaign] = useState(1)
+  const [showPushPrompt, setShowPushPrompt] = useState(true)
+  const [pushPromptCampaign, setPushPromptCampaign] = useState(1)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -12,7 +14,7 @@ export default function AdminSettingsTab() {
     async function loadSettings() {
       const { data, error } = await supabase
         .from('site_settings')
-        .select('maintenance_mode, show_install_banner, install_banner_campaign')
+        .select('maintenance_mode, show_install_banner, install_banner_campaign, show_push_prompt, push_prompt_campaign')
         .eq('id', 1)
         .maybeSingle()
         
@@ -20,6 +22,8 @@ export default function AdminSettingsTab() {
         setMaintenanceMode(data.maintenance_mode)
         if (data.show_install_banner !== undefined) setShowInstallBanner(data.show_install_banner)
         if (data.install_banner_campaign !== undefined) setInstallBannerCampaign(data.install_banner_campaign)
+        if (data.show_push_prompt !== undefined) setShowPushPrompt(data.show_push_prompt)
+        if (data.push_prompt_campaign !== undefined) setPushPromptCampaign(data.push_prompt_campaign)
       }
       setLoading(false)
     }
@@ -61,6 +65,29 @@ export default function AdminSettingsTab() {
       setInstallBannerCampaign(newCampaign)
     } else {
       alert('Failed to update install banner setting.')
+    }
+    setSaving(false)
+  }
+
+  const togglePushPrompt = async () => {
+    setSaving(true)
+    const newValue = !showPushPrompt
+    const newCampaign = newValue ? pushPromptCampaign + 1 : pushPromptCampaign
+    
+    const { error } = await supabase
+      .from('site_settings')
+      .update({ 
+        show_push_prompt: newValue, 
+        push_prompt_campaign: newCampaign,
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', 1)
+
+    if (!error) {
+      setShowPushPrompt(newValue)
+      setPushPromptCampaign(newCampaign)
+    } else {
+      alert('Failed to update push prompt setting.')
     }
     setSaving(false)
   }
@@ -123,6 +150,32 @@ export default function AdminSettingsTab() {
                 aria-hidden="true"
                 className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
                   showInstallBanner ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-[15px] font-semibold text-wa-ink">Show Notification Permission Prompt</h3>
+              <p className="text-[13px] text-wa-muted mt-0.5 max-w-md">
+                Prompt users to enable push notifications after sending a message. 
+                Toggling this off and then on again will reset the dismiss state for all visitors.
+              </p>
+            </div>
+            <button
+              onClick={togglePushPrompt}
+              disabled={saving}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-wa-teal focus:ring-offset-2 ${
+                showPushPrompt ? 'bg-wa-teal' : 'bg-gray-200'
+              } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+              role="switch"
+              aria-checked={showPushPrompt}
+            >
+              <span
+                aria-hidden="true"
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  showPushPrompt ? 'translate-x-5' : 'translate-x-0'
                 }`}
               />
             </button>

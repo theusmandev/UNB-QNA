@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useLocalIdentity } from '../hooks/useLocalIdentity'
+import { useSiteSettings } from '../contexts/SiteSettingsContext'
 import { formatSimpleDate } from '../lib/date'
 import { channelName } from '../lib/supabase'
 import Header from '../components/Header'
@@ -13,6 +14,7 @@ import type { PublicFeedItem, Question, VisitorIdentity } from '../types'
 
 export default function PublicResponsePage() {
   const { slug = '' } = useParams()
+  const { showPushPrompt: showPushPromptSetting, pushPromptCampaign } = useSiteSettings()
   const { identity, saveIdentity, pending, addPending } = useLocalIdentity(slug)
 
   const [question, setQuestion] = useState<Question | null | undefined>(undefined) // undefined = loading
@@ -226,9 +228,12 @@ export default function PublicResponsePage() {
     setCount((c) => (c === null ? null : c + 1))
 
     // Check if we should prompt for push notifications
+    const declinedCampaign = parseInt(localStorage.getItem('unb_push_prompt_declined_campaign') || '0', 10)
+    
     if (
       'PushManager' in window &&
-      !localStorage.getItem('unb_push_prompt_declined_at') &&
+      showPushPromptSetting &&
+      declinedCampaign < pushPromptCampaign &&
       Notification.permission !== 'granted' &&
       Notification.permission !== 'denied'
     ) {
@@ -274,7 +279,7 @@ export default function PublicResponsePage() {
           auth: sub.keys.auth
         })
       } else {
-        localStorage.setItem('unb_push_prompt_declined_at', Date.now().toString())
+        localStorage.setItem('unb_push_prompt_declined_campaign', pushPromptCampaign.toString())
       }
     } catch (err) {
       console.error('Push error:', err)
@@ -283,7 +288,7 @@ export default function PublicResponsePage() {
 
   function handlePushDecline() {
     setShowPushPrompt(false)
-    localStorage.setItem('unb_push_prompt_declined_at', Date.now().toString())
+    localStorage.setItem('unb_push_prompt_declined_campaign', pushPromptCampaign.toString())
   }
 
   if (question === undefined) {

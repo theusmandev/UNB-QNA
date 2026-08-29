@@ -433,8 +433,17 @@ alter publication supabase_realtime add table public.updates, public.update_reac
 create table if not exists public.site_settings (
   id integer primary key check (id = 1),
   maintenance_mode boolean not null default false,
+  show_install_banner boolean not null default true,
+  install_banner_campaign integer not null default 1,
+  show_push_prompt boolean not null default true,
+  push_prompt_campaign integer not null default 1,
   updated_at timestamptz not null default now()
 );
+
+alter table public.site_settings add column if not exists show_install_banner boolean not null default true;
+alter table public.site_settings add column if not exists install_banner_campaign integer not null default 1;
+alter table public.site_settings add column if not exists show_push_prompt boolean not null default true;
+alter table public.site_settings add column if not exists push_prompt_campaign integer not null default 1;
 
 -- Insert the single row if it doesn't exist
 insert into public.site_settings (id, maintenance_mode)
