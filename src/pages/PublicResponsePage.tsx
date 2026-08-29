@@ -22,6 +22,7 @@ export default function PublicResponsePage() {
   const [showIdentityModal, setShowIdentityModal] = useState(false)
   const [pendingMessage, setPendingMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [showPushPrompt, setShowPushPrompt] = useState(false)
   const [adminTyping, setAdminTyping] = useState<{name: string} | null>(null)
   const adminTypingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -209,6 +210,7 @@ export default function PublicResponsePage() {
     // even though the insert itself is allowed. Update the UI from local state instead.
     const { error: insertError } = await supabase.from('responses').insert({
       question_id: question.id,
+      visitor_id: visitorId,
       reader_email: id.email,
       reader_name: id.name,
       message,
@@ -222,6 +224,17 @@ export default function PublicResponsePage() {
     forceScrollRef.current = true
     addPending(message)
     setCount((c) => (c === null ? null : c + 1))
+
+    // Check if we should prompt for push notifications
+    if (
+      'PushManager' in window &&
+      !localStorage.getItem('unb_push_prompt_declined_at') &&
+      Notification.permission !== 'granted' &&
+      Notification.permission !== 'denied'
+    ) {
+      // Small delay so they see the message sent first
+      setTimeout(() => setShowPushPrompt(true), 1500)
+    }
   }
 
   function handleSend(message: string) {
@@ -240,6 +253,37 @@ export default function PublicResponsePage() {
       submitResponse(pendingMessage, id)
       setPendingMessage(null)
     }
+  }
+
+  async function handlePushAllow() {
+    setShowPushPrompt(false)
+    try {
+      const permission = await Notification.requestPermission()
+      if (permission === 'granted') {
+        const registration = await navigator.serviceWorker.ready
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY
+        })
+        
+        const sub = JSON.parse(JSON.stringify(subscription))
+        await supabase.from('push_subscriptions').insert({
+          visitor_id: visitorId,
+          endpoint: sub.endpoint,
+          p256dh: sub.keys.p256dh,
+          auth: sub.keys.auth
+        })
+      } else {
+        localStorage.setItem('unb_push_prompt_declined_at', Date.now().toString())
+      }
+    } catch (err) {
+      console.error('Push error:', err)
+    }
+  }
+
+  function handlePushDecline() {
+    setShowPushPrompt(false)
+    localStorage.setItem('unb_push_prompt_declined_at', Date.now().toString())
   }
 
   if (question === undefined) {
@@ -351,7 +395,18 @@ export default function PublicResponsePage() {
       {error && <p className="bg-red-50 px-4 py-1.5 text-center text-xs text-red-600">{error}</p>}
 
       {question.accepting_responses ? (
-        <ComposeBar onSend={handleSend} />
+        <div className="flex flex-col">
+          {showPushPrompt && (
+            <div className="bg-wa-teal text-white px-4 py-3 flex items-center justify-between animate-in slide-in-from-bottom-2">
+              <span className="text-sm">Get notified when we reply?</span>
+              <div className="flex gap-2">
+                <button onClick={handlePushDecline} className="text-xs font-semibold px-2 py-1 opacity-80 hover:opacity-100">Not Now</button>
+                <button onClick={handlePushAllow} className="bg-white text-wa-teal text-xs font-bold px-3 py-1 rounded-full shadow-sm hover:bg-gray-50">Allow</button>
+              </div>
+            </div>
+          )}
+          <ComposeBar onSend={handleSend} />
+        </div>
       ) : (
         <div className="border-t border-black/5 bg-[#F0F0F0] px-4 py-3 text-center text-xs text-wa-muted">
           This question is no longer accepting new responses.

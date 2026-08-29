@@ -31,6 +31,7 @@ alter table public.questions add column if not exists sender_name text;
 create table if not exists public.responses (
   id           uuid primary key default gen_random_uuid(),
   question_id  uuid not null references public.questions(id) on delete cascade,
+  visitor_id   uuid,
   reader_name  text,
   reader_email text not null,
   message      text not null,
@@ -701,3 +702,30 @@ AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_reader_history(text) TO authenticated;
+
+-- ============================================================================
+-- PUSH NOTIFICATIONS
+-- ============================================================================
+
+-- 2. Create push_subscriptions table
+create table if not exists public.push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  visitor_id uuid not null,
+  endpoint text not null,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamptz not null default now(),
+  unique(visitor_id, endpoint)
+);
+
+alter table public.push_subscriptions enable row level security;
+
+-- Allow anon to insert their own subscriptions.
+-- Since visitor_id is a secret unguessable UUID generated on the client,
+-- possessing the visitor_id is proof of ownership for that session.
+drop policy if exists "anon can insert their own subscriptions" on public.push_subscriptions;
+create policy "anon can insert their own subscriptions"
+  on public.push_subscriptions
+  for insert
+  to anon, authenticated
+  with check (true);
