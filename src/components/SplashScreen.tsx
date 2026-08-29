@@ -26,7 +26,7 @@ export default function SplashScreen({ isLoading }: SplashScreenProps) {
       <div className="flex flex-col items-center">
         {/* Subtle pulsing logo */}
         <div className="w-24 h-24 mb-6 rounded-full bg-white/10 p-4 animate-pulse">
-          <img src="/unb-icon.svg" alt="Urdu Novel Bank" className="w-full h-full object-contain" />
+          <img src="/pwa-512x512.png" alt="Urdu Novel Bank" className="w-full h-full object-contain" />
         </div>
         
         {/* WhatsApp-style minimal spinner / loading indicator */}
@@ -35,8 +35,6 @@ export default function SplashScreen({ isLoading }: SplashScreenProps) {
           <div className="w-2 h-2 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: '150ms' }} />
           <div className="w-2 h-2 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
-        
-        <h1 className="mt-8 text-white/90 text-lg font-medium tracking-wide">Urdu Novel Bank</h1>
       </div>
     </div>
   );
