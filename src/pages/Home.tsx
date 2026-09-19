@@ -290,13 +290,22 @@ export default function Home() {
                       <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <p 
-                            dir="auto"
-                            style={{ unicodeBidi: 'plaintext' }}
-                            className={`truncate text-[15px] font-semibold text-wa-ink ${
+                            className={`text-[15px] font-semibold text-wa-ink overflow-visible ${
                               isUrdu(q.question_text) ? 'urdu-text' : ''
                             }`}
                           >
-                            {q.question_text}
+                            <span
+                              dir="auto"
+                              style={{
+                                unicodeBidi: 'plaintext',
+                                display: 'block',
+                                overflow: 'hidden',
+                                whiteSpace: 'nowrap',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {q.question_text}
+                            </span>
                           </p>
                           <div className="mt-0.5 flex items-center gap-2">
                             <p className="text-[13px] text-wa-muted">
