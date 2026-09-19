@@ -299,7 +299,8 @@ export default function Home() {
                               style={{
                                 unicodeBidi: 'plaintext',
                                 display: 'block',
-                                overflow: 'hidden',
+                                overflowX: 'hidden',
+                                overflowY: 'visible',
                                 whiteSpace: 'nowrap',
                                 textOverflow: 'ellipsis',
                               }}
