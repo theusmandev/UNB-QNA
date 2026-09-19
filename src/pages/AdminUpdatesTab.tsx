@@ -33,7 +33,7 @@ const extractYouTubeVideoId = (url: string) => {
 };
 
 const CustomToolbar = () => (
-  <div id="toolbar" className="border-b border-black/10 flex flex-wrap gap-y-2 p-2 bg-gray-50 rounded-t-lg">
+  <div id="toolbar" className="sticky top-[99px] z-10 border-b border-black/10 flex flex-wrap gap-y-2 p-2 bg-gray-50 rounded-t-lg shadow-sm">
     <span className="ql-formats mr-2">
       <button className="ql-bold" />
       <button className="ql-italic" />
@@ -364,7 +364,7 @@ export default function AdminUpdatesTab() {
             placeholder="Update Title"
             className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-wa-teal font-medium"
           />
-          <div className="bg-white max-h-[60vh] [&_.ql-container]:min-h-[250px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[250px] rounded-lg border border-black/10 overflow-hidden focus-within:border-wa-teal flex flex-col">
+          <div className="bg-white [&_.ql-container]:min-h-[250px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[250px] [&_.ql-container]:rounded-b-lg rounded-lg border border-black/10 focus-within:border-wa-teal flex flex-col">
             <CustomToolbar />
             <ReactQuill
               ref={quillRef}
@@ -373,7 +373,7 @@ export default function AdminUpdatesTab() {
               value={newContent}
               onChange={setNewContent}
               placeholder="Write your announcement or update here..."
-              className="border-none flex-1 min-h-0 flex flex-col [&_.ql-container.ql-snow]:border-none [&_.ql-container.ql-snow]:flex-1 [&_.ql-container.ql-snow]:min-h-0 [&_.ql-editor]:resize-y"
+              className="border-none flex-1 [&_.ql-container.ql-snow]:border-none [&_.ql-editor]:resize-y"
             />
           </div>
           <div className="flex justify-end">
@@ -406,8 +406,8 @@ export default function AdminUpdatesTab() {
                       placeholder="Update Title"
                       className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-wa-teal font-medium"
                     />
-                    <div className="bg-white max-h-[60vh] [&_.ql-container]:min-h-[150px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[150px] rounded-lg border border-black/10 overflow-hidden focus-within:border-wa-teal flex flex-col">
-                      <div id="edit-toolbar" className="border-b border-black/10 flex flex-wrap gap-y-2 p-2 bg-gray-50 rounded-t-lg">
+                    <div className="bg-white [&_.ql-container]:min-h-[150px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[150px] [&_.ql-container]:rounded-b-lg rounded-lg border border-black/10 focus-within:border-wa-teal flex flex-col">
+                      <div id="edit-toolbar" className="sticky top-[99px] z-10 border-b border-black/10 flex flex-wrap gap-y-2 p-2 bg-gray-50 rounded-t-lg shadow-sm">
                         <span className="ql-formats mr-2">
                           <button className="ql-bold" />
                           <button className="ql-italic" />
@@ -451,7 +451,7 @@ export default function AdminUpdatesTab() {
                         value={editContent}
                         onChange={setEditContent}
                         placeholder="Write your announcement or update here..."
-                        className="border-none flex-1 min-h-0 flex flex-col [&_.ql-container.ql-snow]:border-none [&_.ql-container.ql-snow]:flex-1 [&_.ql-container.ql-snow]:min-h-0 [&_.ql-editor]:resize-y"
+                        className="border-none flex-1 [&_.ql-container.ql-snow]:border-none [&_.ql-editor]:resize-y"
                       />
                     </div>
                     <div className="flex justify-end gap-2">

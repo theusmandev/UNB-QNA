@@ -44,7 +44,7 @@ export default function AdminPanel() {
 
   return (
     <div className="min-h-screen bg-wa-bg pb-10">
-      <header className="sticky top-0 z-10 bg-wa-header text-white shadow">
+      <header className="sticky top-0 z-20 bg-wa-header text-white shadow">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
           <div>
             <h1 className="text-[15px] font-semibold leading-tight">{channelName} Admin</h1>
