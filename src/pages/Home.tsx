@@ -22,17 +22,20 @@ function isRtlFirst(text: string): boolean {
 }
 
 function MarqueeTitle({ text, isUrduText }: { text: string; isUrduText: boolean }) {
-  const spanRef = useRef<HTMLSpanElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const textRef = useRef<HTMLSpanElement>(null)
   const [scrollStyle, setScrollStyle] = useState<CSSProperties>({})
   const [overflows, setOverflows] = useState(false)
 
   useEffect(() => {
-    const el = spanRef.current
-    if (!el) return
+    const container = containerRef.current
+    const el = textRef.current
+    if (!container || !el) return
 
     function measure() {
-      if (!el) return
-      const overflow = el.scrollWidth - el.offsetWidth
+      if (!container || !el) return
+      // The text length (el) vs the available lane width (container)
+      const overflow = el.offsetWidth - container.offsetWidth
       if (overflow > 4) {
         // Scroll direction depends on which end has the hidden content:
         // RTL-first text is right-aligned → hidden content is on the left → scroll right (+)
@@ -53,28 +56,34 @@ function MarqueeTitle({ text, isUrduText }: { text: string; isUrduText: boolean 
 
     measure()
     const ro = new ResizeObserver(measure)
-    ro.observe(el)
+    ro.observe(container)
     return () => ro.disconnect()
   }, [text])
 
   return (
-    <p className={`text-[15px] font-semibold text-wa-ink ${isUrduText ? 'urdu-text' : ''}`}>
+    <div 
+      ref={containerRef}
+      dir="auto"
+      className={`text-[15px] font-semibold text-wa-ink ${isUrduText ? 'urdu-text' : ''}`}
+      style={{
+        unicodeBidi: 'plaintext',
+        // 'clip' hides horizontal overflow without forcing overflowY to 'auto' (which causes scrollbars)
+        overflowX: 'clip',
+        overflowY: 'visible',
+        whiteSpace: 'nowrap',
+      }}
+    >
       <span
-        ref={spanRef}
-        dir="auto"
+        ref={textRef}
         style={{
-          unicodeBidi: 'plaintext',
-          display: 'block',
-          overflowX: 'hidden',
-          overflowY: 'visible',
-          whiteSpace: 'nowrap',
+          display: 'inline-block',
           ...scrollStyle,
         }}
         className={overflows ? 'marquee-scroll' : ''}
       >
         {text}
       </span>
-    </p>
+    </div>
   )
 }
 
