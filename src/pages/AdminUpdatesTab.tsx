@@ -33,7 +33,7 @@ const extractYouTubeVideoId = (url: string) => {
 };
 
 const CustomToolbar = () => (
-  <div id="toolbar" className="sticky top-0 z-10 border-b border-black/10 flex flex-wrap gap-y-2 p-2 bg-gray-50 rounded-t-lg shadow-sm">
+  <div id="toolbar" className="border-b border-black/10 flex flex-wrap gap-y-2 p-2 bg-gray-50 rounded-t-lg">
     <span className="ql-formats mr-2">
       <button className="ql-bold" />
       <button className="ql-italic" />
@@ -144,6 +144,16 @@ export default function AdminUpdatesTab() {
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+
+  function toggleExpand(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
   const [editContent, setEditContent] = useState('')
   const [savingEdit, setSavingEdit] = useState(false)
   const editQuillRef = useRef<ReactQuill>(null)
@@ -354,7 +364,7 @@ export default function AdminUpdatesTab() {
             placeholder="Update Title"
             className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-wa-teal font-medium"
           />
-          <div className="bg-white max-h-[60vh] overflow-y-auto relative [&_.ql-container]:min-h-[250px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[250px] rounded-lg border border-black/10 overflow-hidden focus-within:border-wa-teal flex flex-col">
+          <div className="bg-white max-h-[60vh] [&_.ql-container]:min-h-[250px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[250px] rounded-lg border border-black/10 overflow-hidden focus-within:border-wa-teal flex flex-col">
             <CustomToolbar />
             <ReactQuill
               ref={quillRef}
@@ -363,7 +373,7 @@ export default function AdminUpdatesTab() {
               value={newContent}
               onChange={setNewContent}
               placeholder="Write your announcement or update here..."
-              className="border-none flex-1 [&_.ql-container.ql-snow]:border-none [&_.ql-editor]:resize-y"
+              className="border-none flex-1 min-h-0 flex flex-col [&_.ql-container.ql-snow]:border-none [&_.ql-container.ql-snow]:flex-1 [&_.ql-container.ql-snow]:min-h-0 [&_.ql-editor]:resize-y"
             />
           </div>
           <div className="flex justify-end">
@@ -396,8 +406,8 @@ export default function AdminUpdatesTab() {
                       placeholder="Update Title"
                       className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-wa-teal font-medium"
                     />
-                    <div className="bg-white max-h-[60vh] overflow-y-auto relative [&_.ql-container]:min-h-[150px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[150px] rounded-lg border border-black/10 overflow-hidden focus-within:border-wa-teal flex flex-col">
-                      <div id="edit-toolbar" className="sticky top-0 z-10 border-b border-black/10 flex flex-wrap gap-y-2 p-2 bg-gray-50 rounded-t-lg shadow-sm">
+                    <div className="bg-white max-h-[60vh] [&_.ql-container]:min-h-[150px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[150px] rounded-lg border border-black/10 overflow-hidden focus-within:border-wa-teal flex flex-col">
+                      <div id="edit-toolbar" className="border-b border-black/10 flex flex-wrap gap-y-2 p-2 bg-gray-50 rounded-t-lg">
                         <span className="ql-formats mr-2">
                           <button className="ql-bold" />
                           <button className="ql-italic" />
@@ -441,7 +451,7 @@ export default function AdminUpdatesTab() {
                         value={editContent}
                         onChange={setEditContent}
                         placeholder="Write your announcement or update here..."
-                        className="border-none flex-1 [&_.ql-container.ql-snow]:border-none [&_.ql-editor]:resize-y"
+                        className="border-none flex-1 min-h-0 flex flex-col [&_.ql-container.ql-snow]:border-none [&_.ql-container.ql-snow]:flex-1 [&_.ql-container.ql-snow]:min-h-0 [&_.ql-editor]:resize-y"
                       />
                     </div>
                     <div className="flex justify-end gap-2">
@@ -465,26 +475,41 @@ export default function AdminUpdatesTab() {
               )
             }
 
+            const isExpanded = expandedIds.has(update.id)
+
             return (
-              <li key={update.id} className="rounded-xl bg-white p-4 shadow-sm">
-                <h3 
-                  dir="auto"
-                  style={{ unicodeBidi: 'plaintext' }}
-                  className={`text-base font-semibold text-wa-ink mb-1 ${isUrdu(update.title) ? 'urdu-text' : ''}`}
-                >
-                  {update.title}
-                </h3>
-                <div 
-                  dir="auto"
-                  style={{ unicodeBidi: 'plaintext' }}
-                  className={`whitespace-pre-wrap text-[15px] leading-relaxed text-wa-ink [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5] [&_img]:max-w-[500px] [&_img]:w-full [&_img]:rounded-lg [&_img]:my-2 [&_img]:mx-auto [&_img]:block ${isUrdu(update.content) ? 'urdu-text' : ''}`}
-                  dangerouslySetInnerHTML={{ 
-                    __html: DOMPurify.sanitize(update.content, { 
-                      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'strike', 'blockquote', 'h1', 'h2', 'h3', 'iframe'], 
-                      ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class', 'dir', 'allow', 'allowfullscreen', 'frameborder', 'scrolling'] 
-                    }) 
-                  }}
-                />
+              <li 
+                key={update.id} 
+                onClick={() => !isExpanded && toggleExpand(update.id)}
+                className={`rounded-xl bg-white p-4 shadow-sm ${!isExpanded ? 'cursor-pointer hover:bg-gray-50 transition-colors' : ''}`}
+              >
+                <div className="flex justify-between items-start gap-2">
+                  <h3 
+                    dir="auto"
+                    style={{ unicodeBidi: 'plaintext' }}
+                    className={`text-base font-semibold text-wa-ink mb-1 ${isUrdu(update.title) ? 'urdu-text' : ''}`}
+                  >
+                    {update.title}
+                  </h3>
+                </div>
+
+                {!isExpanded && (
+                  <p className="text-xs text-wa-teal font-medium">Tap to read</p>
+                )}
+
+                {isExpanded && (
+                  <div 
+                    dir="auto"
+                    style={{ unicodeBidi: 'plaintext' }}
+                    className={`whitespace-pre-wrap text-[15px] leading-relaxed text-wa-ink [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5] [&_img]:max-w-[500px] [&_img]:w-full [&_img]:rounded-lg [&_img]:my-2 [&_img]:mx-auto [&_img]:block ${isUrdu(update.content) ? 'urdu-text' : ''}`}
+                    dangerouslySetInnerHTML={{ 
+                      __html: DOMPurify.sanitize(update.content, { 
+                        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'img', 'ul', 'ol', 'li', 'u', 's', 'strike', 'blockquote', 'h1', 'h2', 'h3', 'iframe'], 
+                        ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class', 'dir', 'allow', 'allowfullscreen', 'frameborder', 'scrolling'] 
+                      }) 
+                    }}
+                  />
+                )}
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-black/5 pt-3">
                   <div className="flex items-center gap-2">
                     {REACTIONS.map((emoji) => {
@@ -506,13 +531,13 @@ export default function AdminUpdatesTab() {
                       {formatSimpleDate(update.created_at)}
                     </span>
                     <button
-                      onClick={() => startEditing(update)}
+                      onClick={(e) => { e.stopPropagation(); startEditing(update); }}
                       className="rounded-lg border border-black/10 px-2.5 py-1 text-xs font-medium text-wa-ink hover:bg-gray-50"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => togglePin(update)}
+                      onClick={(e) => { e.stopPropagation(); togglePin(update); }}
                       className={`flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium ${
                         update.is_pinned 
                           ? 'border-wa-teal bg-wa-teal/10 text-wa-teal' 
@@ -525,7 +550,7 @@ export default function AdminUpdatesTab() {
                       {update.is_pinned ? 'Pinned' : 'Pin'}
                     </button>
                     <button
-                      onClick={() => handleDelete(update.id)}
+                      onClick={(e) => { e.stopPropagation(); handleDelete(update.id); }}
                       className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
                     >
                       Delete
