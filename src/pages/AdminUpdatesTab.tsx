@@ -483,14 +483,25 @@ export default function AdminUpdatesTab() {
                 onClick={() => !isExpanded && toggleExpand(update.id)}
                 className={`rounded-xl bg-white p-4 shadow-sm ${!isExpanded ? 'cursor-pointer hover:bg-gray-50 transition-colors' : ''}`}
               >
-                <div className="flex justify-between items-start gap-2">
+                <div 
+                  className={`flex justify-between items-start gap-2 ${isExpanded ? 'cursor-pointer group' : ''}`}
+                  onClick={(e) => {
+                    if (isExpanded) {
+                      e.stopPropagation();
+                      toggleExpand(update.id);
+                    }
+                  }}
+                >
                   <h3 
                     dir="auto"
                     style={{ unicodeBidi: 'plaintext' }}
-                    className={`text-base font-semibold text-wa-ink mb-1 ${isUrdu(update.title) ? 'urdu-text' : ''}`}
+                    className={`text-base font-semibold text-wa-ink mb-1 ${isUrdu(update.title) ? 'urdu-text' : ''} ${isExpanded ? 'group-hover:text-wa-teal transition-colors' : ''}`}
                   >
                     {update.title}
                   </h3>
+                  {isExpanded && (
+                    <span className="text-xs text-wa-teal font-medium mt-1 whitespace-nowrap">Tap to hide</span>
+                  )}
                 </div>
 
                 {!isExpanded && (
