@@ -29,6 +29,18 @@ body {
   padding-top: 0.25rem;
 }
 
+/* Marquee: ping-pong scroll for overflowing chat-row titles */
+@keyframes marquee-scroll {
+  /* Dwell at start (0–15%), scroll to end (15–85%), dwell at end (85–100%) */
+  0%,  15% { transform: translateX(0); }
+  85%, 100% { transform: translateX(var(--marquee-dist, 0px)); }
+}
+
+.marquee-scroll {
+  animation: marquee-scroll var(--marquee-duration, 4s) ease-in-out infinite alternate;
+  will-change: transform;
+}
+
 .bubble-tail-in::before {
   content: '';
   position: absolute;

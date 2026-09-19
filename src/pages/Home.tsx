@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { CSSProperties, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { channelName, supabase } from '../lib/supabase'
 import { formatSimpleDate } from '../lib/date'
@@ -8,6 +8,75 @@ import { useSiteSettings } from '../contexts/SiteSettingsContext'
 import Header from '../components/Header'
 import UpdatesTab from '../components/UpdatesTab'
 import type { ActiveQuestionWithCount } from '../types'
+
+/** Returns true if the first strong bidi character in the string is RTL. */
+function isRtlFirst(text: string): boolean {
+  for (const ch of text) {
+    const cp = ch.codePointAt(0) ?? 0
+    // Arabic, Hebrew, Thaana, etc. (broad RTL ranges)
+    if ((cp >= 0x0590 && cp <= 0x08FF) || (cp >= 0xFB1D && cp <= 0xFDFF) || (cp >= 0xFE70 && cp <= 0xFEFF)) return true
+    // Basic Latin letters / Latin Extended
+    if ((cp >= 0x0041 && cp <= 0x007A) || (cp >= 0x00C0 && cp <= 0x024F)) return false
+  }
+  return false
+}
+
+function MarqueeTitle({ text, isUrduText }: { text: string; isUrduText: boolean }) {
+  const spanRef = useRef<HTMLSpanElement>(null)
+  const [scrollStyle, setScrollStyle] = useState<CSSProperties>({})
+  const [overflows, setOverflows] = useState(false)
+
+  useEffect(() => {
+    const el = spanRef.current
+    if (!el) return
+
+    function measure() {
+      if (!el) return
+      const overflow = el.scrollWidth - el.offsetWidth
+      if (overflow > 4) {
+        // Scroll direction depends on which end has the hidden content:
+        // RTL-first text is right-aligned → hidden content is on the left → scroll right (+)
+        // LTR-first text is left-aligned  → hidden content is on the right → scroll left (−)
+        const isRtl = isRtlFirst(text)
+        const dist = isRtl ? overflow : -overflow
+        const duration = Math.min(Math.max(Math.abs(overflow) / 30, 2), 7)
+        setScrollStyle({
+          '--marquee-dist': `${dist}px`,
+          '--marquee-duration': `${duration}s`,
+        } as CSSProperties)
+        setOverflows(true)
+      } else {
+        setScrollStyle({})
+        setOverflows(false)
+      }
+    }
+
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [text])
+
+  return (
+    <p className={`text-[15px] font-semibold text-wa-ink ${isUrduText ? 'urdu-text' : ''}`}>
+      <span
+        ref={spanRef}
+        dir="auto"
+        style={{
+          unicodeBidi: 'plaintext',
+          display: 'block',
+          overflowX: 'hidden',
+          overflowY: 'visible',
+          whiteSpace: 'nowrap',
+          ...scrollStyle,
+        }}
+        className={overflows ? 'marquee-scroll' : ''}
+      >
+        {text}
+      </span>
+    </p>
+  )
+}
 
 declare global {
   interface Window {
@@ -289,25 +358,10 @@ export default function Home() {
                       </div>
                       <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <p 
-                            className={`text-[15px] font-semibold text-wa-ink overflow-visible ${
-                              isUrdu(q.question_text) ? 'urdu-text' : ''
-                            }`}
-                          >
-                            <span
-                              dir="auto"
-                              style={{
-                                unicodeBidi: 'plaintext',
-                                display: 'block',
-                                overflowX: 'hidden',
-                                overflowY: 'visible',
-                                whiteSpace: 'nowrap',
-                                textOverflow: 'ellipsis',
-                              }}
-                            >
-                              {q.question_text}
-                            </span>
-                          </p>
+                          <MarqueeTitle
+                            text={q.question_text}
+                            isUrduText={isUrdu(q.question_text)}
+                          />
                           <div className="mt-0.5 flex items-center gap-2">
                             <p className="text-[13px] text-wa-muted">
                               {q.response_count} response{q.response_count === 1 ? '' : 's'}
