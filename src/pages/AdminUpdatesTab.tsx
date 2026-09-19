@@ -33,7 +33,7 @@ const extractYouTubeVideoId = (url: string) => {
 };
 
 const CustomToolbar = () => (
-  <div id="toolbar" className="sticky top-[102px] z-10 border-b border-black/10 flex flex-wrap gap-y-2 p-2 bg-gray-50 rounded-t-lg shadow-sm">
+  <div id="toolbar" className="sticky top-0 z-10 border-b border-black/10 flex flex-wrap gap-y-2 p-2 bg-gray-50 rounded-t-lg shadow-sm">
     <span className="ql-formats mr-2">
       <button className="ql-bold" />
       <button className="ql-italic" />
@@ -354,7 +354,7 @@ export default function AdminUpdatesTab() {
             placeholder="Update Title"
             className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-wa-teal font-medium"
           />
-          <div className="bg-white [&_.ql-container]:min-h-[250px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[250px] [&_.ql-container]:rounded-b-lg rounded-lg border border-black/10 focus-within:border-wa-teal flex flex-col">
+          <div className="bg-white max-h-[60vh] overflow-y-auto relative [&_.ql-container]:min-h-[250px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[250px] rounded-lg border border-black/10 overflow-hidden focus-within:border-wa-teal flex flex-col">
             <CustomToolbar />
             <ReactQuill
               ref={quillRef}
@@ -396,8 +396,8 @@ export default function AdminUpdatesTab() {
                       placeholder="Update Title"
                       className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-wa-teal font-medium"
                     />
-                    <div className="bg-white [&_.ql-container]:min-h-[150px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[150px] [&_.ql-container]:rounded-b-lg rounded-lg border border-black/10 focus-within:border-wa-teal flex flex-col">
-                      <div id="edit-toolbar" className="sticky top-[102px] z-10 border-b border-black/10 flex flex-wrap gap-y-2 p-2 bg-gray-50 rounded-t-lg shadow-sm">
+                    <div className="bg-white max-h-[60vh] overflow-y-auto relative [&_.ql-container]:min-h-[150px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[150px] rounded-lg border border-black/10 overflow-hidden focus-within:border-wa-teal flex flex-col">
+                      <div id="edit-toolbar" className="sticky top-0 z-10 border-b border-black/10 flex flex-wrap gap-y-2 p-2 bg-gray-50 rounded-t-lg shadow-sm">
                         <span className="ql-formats mr-2">
                           <button className="ql-bold" />
                           <button className="ql-italic" />
