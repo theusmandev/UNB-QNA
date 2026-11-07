@@ -7,6 +7,7 @@ import { useLocalIdentity } from '../hooks/useLocalIdentity'
 import { useSiteSettings } from '../contexts/SiteSettingsContext'
 import Header from '../components/Header'
 import UpdatesTab from '../components/UpdatesTab'
+import PoweredByBadge from '../components/PoweredByBadge'
 import type { ActiveQuestionWithCount } from '../types'
 
 /** Returns true if the first strong bidi character in the string is RTL. */
@@ -413,6 +414,12 @@ export default function Home() {
                   >
                     {loadingMore ? 'Loading…' : 'Load more'}
                   </button>
+                </div>
+              )}
+              {/* WhatsApp-style end-of-list branded footer */}
+              {!loadingMore && (
+                <div className="flex justify-center py-8 mb-4">
+                  <PoweredByBadge />
                 </div>
               )}
             </>

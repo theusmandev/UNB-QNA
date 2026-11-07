@@ -4,6 +4,7 @@ import { formatSimpleDate } from '../lib/date'
 import { isUrdu } from '../lib/isUrdu'
 import DOMPurify from 'dompurify'
 import type { Update } from '../types'
+import PoweredByBadge from './PoweredByBadge'
 
 // Configure DOMPurify to ensure links open in a new tab
 DOMPurify.addHook('afterSanitizeAttributes', function(node) {
@@ -300,6 +301,12 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
           >
             {loadingMore ? 'Loading…' : 'Load more'}
           </button>
+        </div>
+      )}
+      {/* WhatsApp-style end-of-list branded footer */}
+      {!loadingMore && (
+        <div className="flex justify-center py-8 mb-4">
+          <PoweredByBadge />
         </div>
       )}
     </div>

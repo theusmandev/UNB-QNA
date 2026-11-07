@@ -1,4 +1,5 @@
 import Header from '../components/Header'
+import PoweredByBadge from '../components/PoweredByBadge'
 
 export default function Maintenance() {
   return (
@@ -21,6 +22,7 @@ export default function Maintenance() {
             We're currently performing a little bit of maintenance to improve the site. Please check back soon.
           </p>
         </div>
+        <PoweredByBadge />
       </div>
     </div>
   )

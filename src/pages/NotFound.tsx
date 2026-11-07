@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
+import PoweredByBadge from '../components/PoweredByBadge'
 
 export default function NotFound() {
   return (
@@ -32,6 +33,7 @@ export default function NotFound() {
             </Link>
           </div>
         </div>
+        <PoweredByBadge />
       </div>
     </div>
   )

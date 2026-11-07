@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { channelName } from '../lib/supabase'
+import PoweredByBadge from '../components/PoweredByBadge'
 
 export default function AdminLogin() {
   const { user, loading, signIn } = useAuth()
@@ -29,7 +30,7 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-wa-bg px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-wa-bg px-4 gap-6">
       <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-sm">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-wa-header text-xl font-semibold text-white">
           {channelName.charAt(0)}
@@ -65,6 +66,7 @@ export default function AdminLogin() {
           {submitting ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
+      <PoweredByBadge />
     </div>
   )
 }
