@@ -91,3 +91,39 @@ body {
   margin: 8px auto !important;
   display: block !important;
 }
+
+/**
+ * Update body: prevents long URLs and unbreakable strings from overflowing
+ * the cream card container on narrow mobile screens.
+ *
+ * Key rules:
+ *   overflow-wrap: anywhere  — allows break points anywhere in a word/URL
+ *   word-break: break-word   — legacy fallback for Safari < 15
+ *   max-width: 100%          — never wider than the card's inner padding box
+ *   min-width: 0             — allows flex children to shrink below content size
+ *
+ * <a> targets additionally get:
+ *   direction: ltr           — forces LTR rendering for URLs inside RTL paragraphs
+ *   unicode-bidi: embed      — creates an isolated bidi context so slashes/colons
+ *                              don't reverse under the paragraph's RTL direction
+ *   word-break: break-all    — breaks at ANY character boundary (last resort for
+ *                              long domain segments with no soft-break opportunities)
+ *   overflow-wrap: anywhere  — identical to parent, re-stated for specificity
+ *   display: inline-block    — ensures max-width: 100% is honoured on inline elements
+ *   max-width: 100%          — URL link can never be wider than its container
+ */
+.update-body {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.update-body a {
+  direction: ltr;
+  unicode-bidi: embed;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  display: inline-block;
+  max-width: 100%;
+}

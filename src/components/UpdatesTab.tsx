@@ -207,7 +207,7 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
           <div 
             key={update.id} 
             onClick={() => !isExpanded && toggleExpand(update.id)}
-            className={`rounded-xl bg-[#FCF3D7] p-3 shadow-sm ${!isExpanded ? 'cursor-pointer hover:bg-[#FBEBB5] transition-colors' : ''}`}
+            className={`min-w-0 rounded-xl bg-[#FCF3D7] p-3 shadow-sm ${!isExpanded ? 'cursor-pointer hover:bg-[#FBEBB5] transition-colors' : ''}`}
           >
             <div className="flex justify-between items-start gap-2">
               <h3 
@@ -238,7 +238,7 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
                 <div 
                   dir="auto"
                   style={{ unicodeBidi: 'plaintext' }}
-                  className={`whitespace-pre-wrap text-[15px] leading-relaxed mt-2 [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5] [&_img]:max-w-[500px] [&_img]:w-full [&_img]:rounded-lg [&_img]:my-2 [&_img]:mx-auto [&_img]:block
+                  className={`update-body whitespace-pre-wrap text-[15px] leading-relaxed mt-2 [&_a]:text-[#027EB5] [&_a]:underline [&_a]:decoration-[#027EB5]/30 hover:[&_a]:decoration-[#027EB5] [&_img]:max-w-[500px] [&_img]:w-full [&_img]:rounded-lg [&_img]:my-2 [&_img]:mx-auto [&_img]:block
                     ${isUrdu(update.content) ? 'urdu-text' : 'text-wa-ink'}`}
                   dangerouslySetInnerHTML={{ 
                     __html: DOMPurify.sanitize(update.content, { 
