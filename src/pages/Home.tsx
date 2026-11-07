@@ -330,7 +330,7 @@ export default function Home() {
       )}
 
       <div 
-        className="flex-1 overflow-y-auto bg-gray-50/50 pb-20"
+        className="flex-1 overflow-y-auto bg-gray-50/50 flex flex-col"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -344,7 +344,8 @@ export default function Home() {
               No active questions at the moment.
             </div>
           ) : (
-            <>
+            /* flex-col so mt-auto on the badge footer docks it to the bottom */
+            <div className="flex flex-col flex-1">
               <ul className="divide-y divide-black/5 bg-white">
                 {questions.map((q) => {
                   let unreadCount = 0
@@ -416,13 +417,13 @@ export default function Home() {
                   </button>
                 </div>
               )}
-              {/* WhatsApp-style end-of-list branded footer */}
+              {/* WhatsApp-style end-of-list branded footer — mt-auto docks it to the bottom */}
               {!loadingMore && (
-                <div className="flex justify-center py-8 mb-4">
+                <div className="mt-auto flex justify-center pt-3 pb-4">
                   <PoweredByBadge />
                 </div>
               )}
-            </>
+            </div>
           )
         ) : (
           <UpdatesTab visitorId={visitorId} />

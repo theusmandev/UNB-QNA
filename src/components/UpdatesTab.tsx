@@ -199,7 +199,7 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col flex-1 gap-4 p-4">
       {updates.map((update) => {
         const isExpanded = expandedIds.has(update.id)
 
@@ -303,9 +303,9 @@ export default function UpdatesTab({ visitorId }: UpdatesTabProps) {
           </button>
         </div>
       )}
-      {/* WhatsApp-style end-of-list branded footer */}
+      {/* WhatsApp-style end-of-list branded footer — mt-auto docks it to the bottom */}
       {!loadingMore && (
-        <div className="flex justify-center py-8 mb-4">
+        <div className="mt-auto flex justify-center pt-3 pb-4">
           <PoweredByBadge />
         </div>
       )}

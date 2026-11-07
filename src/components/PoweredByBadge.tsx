@@ -37,13 +37,13 @@ export default function PoweredByBadge() {
       </span>
 
       {/* Urdu Novel Bank calligraphy wordmark */}
-      {/* Tightened viewBox: original "120 615 1010 400" → "140 630 970 365"       */}
+      {/* Tightened viewBox: original "120 615 1010 400" → "140 630 970 340"       */}
       {/* The <g transform="translate(0 22)"> shifts content down 22px.             */}
-      {/* Actual calligraphy Y starts ≈635 (after offset), bottom nuqta ≈ 968.     */}
-      {/* Safe bounding: minY=630, height=365 keeps nuqta+margin inside the frame. */}
+      {/* Actual calligraphy Y starts ≈635 (after offset), bottom nuqta ≈ 969.     */}
+      {/* minY=630 + height=340 = 970 → lands 1px below nuqta, nothing clipped.   */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="140 630 970 365"
+        viewBox="140 630 970 340"
         role="img"
         aria-labelledby={titleId}
         className="w-24 sm:w-28 h-auto -mt-0.5"
@@ -88,3 +88,6 @@ export default function PoweredByBadge() {
         </g>
       </svg>
     </a>
+  )
+}
+
