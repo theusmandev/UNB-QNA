@@ -1,0 +1,5 @@
+project_id = "rpfmjcqnejkeijkqsqus"
+
+[functions.keep-alive]
+verify_jwt = false
+
